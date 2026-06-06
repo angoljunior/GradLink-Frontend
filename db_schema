@@ -1,0 +1,117 @@
+CREATE SCHEMA "public";
+CREATE TABLE "applications" (
+	"id" serial PRIMARY KEY,
+	"student_id" integer NOT NULL,
+	"job_id" integer NOT NULL,
+	"status" text DEFAULT 'pending' NOT NULL,
+	"cover_letter" text,
+	"applied_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	"interview_date" timestamp,
+	"notes" text
+);
+CREATE TABLE "blog_posts" (
+	"id" serial PRIMARY KEY,
+	"title" text NOT NULL,
+	"excerpt" text NOT NULL,
+	"content" text,
+	"category" text NOT NULL,
+	"author" text NOT NULL,
+	"author_avatar" text,
+	"image" text,
+	"published_at" timestamp DEFAULT now() NOT NULL,
+	"read_time" integer DEFAULT 5 NOT NULL,
+	"tags" text[] DEFAULT '{}' NOT NULL
+);
+CREATE TABLE "companies" (
+	"id" serial PRIMARY KEY,
+	"name" text NOT NULL,
+	"slug" text NOT NULL CONSTRAINT "companies_slug_unique" UNIQUE,
+	"logo" text,
+	"cover_image" text,
+	"industry" text NOT NULL,
+	"size" text DEFAULT 'small' NOT NULL,
+	"location" text NOT NULL,
+	"region" text DEFAULT 'Greater Accra' NOT NULL,
+	"website" text,
+	"description" text DEFAULT '' NOT NULL,
+	"verified" boolean DEFAULT false NOT NULL,
+	"founded_year" integer,
+	"rating" numeric(3, 1),
+	"created_at" timestamp DEFAULT now() NOT NULL
+);
+CREATE TABLE "jobs" (
+	"id" serial PRIMARY KEY,
+	"title" text NOT NULL,
+	"company_id" integer NOT NULL,
+	"location" text NOT NULL,
+	"region" text DEFAULT 'Greater Accra' NOT NULL,
+	"type" text DEFAULT 'graduate' NOT NULL,
+	"industry" text NOT NULL,
+	"salary" text,
+	"salary_min" integer,
+	"salary_max" integer,
+	"remote" boolean DEFAULT false NOT NULL,
+	"description" text DEFAULT '' NOT NULL,
+	"requirements" text DEFAULT '' NOT NULL,
+	"responsibilities" text DEFAULT '' NOT NULL,
+	"featured" boolean DEFAULT false NOT NULL,
+	"is_active" boolean DEFAULT true NOT NULL,
+	"applicants_count" integer DEFAULT 0 NOT NULL,
+	"posted_at" timestamp DEFAULT now() NOT NULL,
+	"deadline" timestamp NOT NULL
+);
+CREATE TABLE "psychometric_tests" (
+	"id" serial PRIMARY KEY,
+	"title" text NOT NULL,
+	"type" text NOT NULL,
+	"description" text DEFAULT '' NOT NULL,
+	"duration" integer DEFAULT 30 NOT NULL,
+	"question_count" integer DEFAULT 20 NOT NULL,
+	"difficulty" text DEFAULT 'medium' NOT NULL,
+	"questions" jsonb DEFAULT '[]' NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL
+);
+CREATE TABLE "students" (
+	"id" serial PRIMARY KEY,
+	"name" text NOT NULL,
+	"email" text NOT NULL CONSTRAINT "students_email_unique" UNIQUE,
+	"phone" text,
+	"avatar" text,
+	"university" text NOT NULL,
+	"university_id" integer,
+	"degree" text NOT NULL,
+	"major" text NOT NULL,
+	"graduation_year" integer NOT NULL,
+	"gpa" numeric(3, 2),
+	"skills" text[] DEFAULT '{}' NOT NULL,
+	"location" text DEFAULT 'Accra' NOT NULL,
+	"region" text DEFAULT 'Greater Accra' NOT NULL,
+	"bio" text,
+	"cv_score" integer,
+	"profile_completion" integer DEFAULT 0 NOT NULL,
+	"employed" boolean DEFAULT false NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL
+);
+CREATE TABLE "testimonials" (
+	"id" serial PRIMARY KEY,
+	"name" text NOT NULL,
+	"role" text NOT NULL,
+	"university" text NOT NULL,
+	"company" text,
+	"avatar" text,
+	"text" text NOT NULL,
+	"rating" integer DEFAULT 5 NOT NULL
+);
+ALTER TABLE "applications" ADD CONSTRAINT "applications_job_id_jobs_id_fk" FOREIGN KEY ("job_id") REFERENCES "jobs"("id");
+ALTER TABLE "applications" ADD CONSTRAINT "applications_student_id_students_id_fk" FOREIGN KEY ("student_id") REFERENCES "students"("id");
+ALTER TABLE "jobs" ADD CONSTRAINT "jobs_company_id_companies_id_fk" FOREIGN KEY ("company_id") REFERENCES "companies"("id");
+CREATE UNIQUE INDEX "applications_pkey" ON "applications" ("id");
+CREATE UNIQUE INDEX "blog_posts_pkey" ON "blog_posts" ("id");
+CREATE UNIQUE INDEX "companies_pkey" ON "companies" ("id");
+CREATE UNIQUE INDEX "companies_slug_unique" ON "companies" ("slug");
+CREATE UNIQUE INDEX "jobs_pkey" ON "jobs" ("id");
+CREATE UNIQUE INDEX "psychometric_tests_pkey" ON "psychometric_tests" ("id");
+CREATE UNIQUE INDEX "students_email_unique" ON "students" ("email");
+CREATE UNIQUE INDEX "students_pkey" ON "students" ("id");
+CREATE UNIQUE INDEX "testimonials_pkey" ON "testimonials" ("id");
