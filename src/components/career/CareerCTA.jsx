@@ -15,8 +15,8 @@ const CareerCTA = () => {
         </h2>
 
         <p className="mt-5 max-w-xl mx-auto text-base md:text-lg text-slate-900 leading-relaxed">
-          Join thousands of Ghanaian graduates who found their first professional
-          role through GradLink.
+          Join thousands of Ghanaian graduates who found their first
+          professional role through GradLink.
         </p>
 
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
