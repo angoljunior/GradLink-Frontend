@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,14 +22,18 @@ const SubscriptionForm = () => {
         setFetchingData(true);
 
         const [companiesResponse, categoriesResponse] = await Promise.all([
-          api.get("/companies"),
-          api.get("/job-categories"),
+          api.get("/companies/"),
+          api.get("/job-categories/"),
         ]);
 
         setCompanies(companiesResponse.data);
         setCategories(categoriesResponse.data);
       } catch (error) {
-        console.log("Failed to fetch companies or categories:", error);
+        console.log("Failed to fetch dropdown data:", error);
+
+        toast.error("Failed to load subscription options", {
+          description: "Please refresh the page and try again.",
+        });
       } finally {
         setFetchingData(false);
       }
@@ -41,9 +46,10 @@ const SubscriptionForm = () => {
     e.preventDefault();
 
     if (!email || !company || !category) {
-      alert(
-        "Please enter your email, select a company, and choose a category.",
-      );
+      toast.warning("Missing information", {
+        description:
+          "Please enter your email, select a company, and choose a job category.",
+      });
       return;
     }
 
@@ -56,7 +62,10 @@ const SubscriptionForm = () => {
         category: Number(category),
       });
 
-      alert(response.data.message || "You have successfully subscribed!");
+      toast.success("Subscription successful", {
+        description:
+          response.data.message || "You will now receive matching job alerts.",
+      });
 
       setEmail("");
       setCompany("");
@@ -67,9 +76,13 @@ const SubscriptionForm = () => {
       const errorMessage =
         error.response?.data?.non_field_errors?.[0] ||
         error.response?.data?.mail?.[0] ||
+        error.response?.data?.company?.[0] ||
+        error.response?.data?.category?.[0] ||
         "Failed to subscribe. You may have already subscribed to this company and category.";
 
-      alert(errorMessage);
+      toast.error("Subscription failed", {
+        description: errorMessage,
+      });
     } finally {
       setLoading(false);
     }
