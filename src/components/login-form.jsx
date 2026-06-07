@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
 import axios from "@/api/axios";
 /* import AuthToggle from "./AuthToggle"; */
+import GoogleAuthButton from "@/components/GoogleAuthButton";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -125,9 +126,7 @@ export function LoginForm({ className, ...props }) {
         <FieldSeparator>Or continue with</FieldSeparator>
 
         <Field>
-          <Button variant="outline" type="button">
-            Login with GitHub
-          </Button>
+          <GoogleAuthButton role="student" />
 
           <FieldDescription className="text-center">
             Don&apos;t have an account?{" "}

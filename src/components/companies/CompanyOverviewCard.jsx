@@ -3,35 +3,66 @@ import {
   Building2,
   CalendarDays,
   Globe,
+  Mail,
+  Phone,
+  BriefcaseBusiness,
 } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 
-const overviewItems = [
-  {
-    label: "Company Size",
-    value: "Enterprise",
-    icon: Users,
-  },
-  {
-    label: "Industry",
-    value: "Telecom",
-    icon: Building2,
-  },
-  {
-    label: "Founded",
-    value: "1994",
-    icon: CalendarDays,
-  },
-  {
-    label: "Website",
-    value: "mtn.com.gh",
-    icon: Globe,
-    link: "https://mtn.com.gh",
-  },
-];
+const CompanyOverviewCard = ({ company, jobsCount = 0 }) => {
+  if (!company) return null;
 
-const CompanyOverviewCard = () => {
+  const industry =
+    company.industry_display || company.industry || "Industry not specified";
+
+  const overviewItems = [
+    {
+      label: "Company Size",
+      value: company.size || "Not specified",
+      icon: Users,
+    },
+    {
+      label: "Industry",
+      value: industry,
+      icon: Building2,
+    },
+    {
+      label: "Open Jobs",
+      value: `${jobsCount} ${jobsCount === 1 ? "job" : "jobs"}`,
+      icon: BriefcaseBusiness,
+    },
+    {
+      label: "Joined",
+      value: company.created_at
+        ? new Date(company.created_at).toLocaleDateString("en-GH", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })
+        : "Not specified",
+      icon: CalendarDays,
+    },
+    {
+      label: "Website",
+      value: company.website || "Not provided",
+      icon: Globe,
+      link: company.website,
+    },
+    {
+      label: "Email",
+      value: company.contact_email || "Not provided",
+      icon: Mail,
+      link: company.contact_email ? `mailto:${company.contact_email}` : null,
+    },
+    {
+      label: "Phone",
+      value: company.contact_phone || "Not provided",
+      icon: Phone,
+      link: company.contact_phone ? `tel:${company.contact_phone}` : null,
+    },
+  ];
+
   return (
     <Card className="rounded-2xl border border-slate-200 bg-white shadow-sm">
       <CardContent className="p-7">
@@ -55,8 +86,12 @@ const CompanyOverviewCard = () => {
                   {item.link ? (
                     <a
                       href={item.link}
-                      target="_blank"
-                      rel="noreferrer"
+                      target={
+                        item.link.startsWith("http") ? "_blank" : undefined
+                      }
+                      rel={
+                        item.link.startsWith("http") ? "noreferrer" : undefined
+                      }
                       className="text-sm text-yellow-600 hover:underline"
                     >
                       {item.value}

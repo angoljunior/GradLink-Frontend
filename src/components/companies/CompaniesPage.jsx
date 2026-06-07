@@ -1,98 +1,132 @@
+import React, { useEffect, useMemo, useState } from "react";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
+
 import CompaniesHero from "./CompaniesHero";
 import CompanyCard from "./CompanyCard";
 
-const companies = [
-  {
-    id: 1,
-    name: "Farfan & Mendes Ghana",
-    location: "Accra",
-    description:
-      "Farfan & Mendes provides engineering, construction, and project management...",
-    size: "medium",
-    jobs: 0,
-  },
-  {
-    id: 2,
-    name: "GCB Bank",
-    location: "Accra",
-    description:
-      "GCB Bank is the largest bank in Ghana by branch network, providing retail, corporate...",
-    size: "large",
-    jobs: 3,
-  },
-  {
-    id: 3,
-    name: "Ghana Ports and...",
-    location: "Tema",
-    description:
-      "GPHA manages and operates the Tema and Takoradi ports, the main gateways for Ghana...",
-    size: "large",
-    jobs: 2,
-  },
-  {
-    id: 4,
-    name: "Ghana National...",
-    location: "Accra",
-    description:
-      "GNPC is Ghana's national oil company responsible for upstream petroleum...",
-    size: "enterprise",
-    jobs: 1,
-  },
-  {
-    id: 5,
-    name: "AirtelTigo Ghana",
-    location: "Accra",
-    description:
-      "AirtelTigo provides mobile voice, data, and digital financial services across Ghana...",
-    size: "large",
-    jobs: 1,
-  },
-  {
-    id: 6,
-    name: "Ecobank Ghana",
-    location: "Accra",
-    description:
-      "Ecobank Ghana offers comprehensive banking services to individuals and businesses...",
-    size: "large",
-    jobs: 2,
-  },
-  {
-    id: 7,
-    name: "Tullow Oil Ghana",
-    location: "Takoradi",
-    description:
-      "Tullow Oil is a leading independent oil and gas company operating in Ghana...",
-    size: "large",
-    jobs: 2,
-  },
-  {
-    id: 8,
-    name: "MTN Ghana",
-    location: "Accra",
-    description:
-      "MTN Ghana is a leading telecommunications company providing mobile and internet...",
-    size: "enterprise",
-    jobs: 3,
-  },
-];
+import api from "@/api/axios";
 
 const CompaniesPage = () => {
+  const [companies, setCompanies] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  const getArrayData = (data) => {
+    return Array.isArray(data) ? data : data.results || [];
+  };
+
+  const fetchCompaniesAndJobs = async () => {
+    try {
+      setLoading(true);
+
+      const [companiesResponse, jobsResponse] = await Promise.all([
+        api.get("/companies/"),
+        api.get("/jobs/"),
+      ]);
+
+      const companiesData = getArrayData(companiesResponse.data);
+      const jobsData = getArrayData(jobsResponse.data);
+
+      const companiesWithJobs = companiesData.map((company) => {
+        const companyJobs = jobsData.filter((job) => {
+          const jobCompanyId = job.company?.id || job.company;
+          return Number(jobCompanyId) === Number(company.id);
+        });
+
+        return {
+          ...company,
+          jobs: companyJobs,
+          jobs_count: companyJobs.length,
+        };
+      });
+
+      setCompanies(companiesWithJobs);
+    } catch (error) {
+      console.log(
+        "Failed to fetch companies or jobs:",
+        error.response?.data || error,
+      );
+
+      toast.error("Failed to load companies", {
+        description: "Please refresh the page and try again.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCompaniesAndJobs();
+  }, []);
+
+  const filteredCompanies = useMemo(() => {
+    const searchValue = searchTerm.toLowerCase().trim();
+
+    if (!searchValue) return companies;
+
+    return companies.filter((company) => {
+      const name = company.name?.toLowerCase() || "";
+      const location = company.location?.toLowerCase() || "";
+      const industry = company.industry?.toLowerCase() || "";
+      const industryDisplay = company.industry_display?.toLowerCase() || "";
+      const description = company.description?.toLowerCase() || "";
+
+      return (
+        name.includes(searchValue) ||
+        location.includes(searchValue) ||
+        industry.includes(searchValue) ||
+        industryDisplay.includes(searchValue) ||
+        description.includes(searchValue)
+      );
+    });
+  }, [companies, searchTerm]);
+
   return (
-
-    
     <div className="min-h-screen bg-[#f6f8fa]">
-      <CompaniesHero />
+      <CompaniesHero searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
 
-      <section className="max-w-7xl mx-auto px-6 py-12">
-        <h2 className="text-2xl font-bold tracking-tight text-slate-950 mb-8">
-          Featured Companies
-        </h2>
+      <section className="mx-auto max-w-7xl px-6 py-12">
+        <div className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-2xl font-bold tracking-tight text-slate-950">
+            Featured Companies
+          </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
-          {companies.map((company) => (
-            <CompanyCard key={company.id} company={company} />
-          ))}
+          {!loading && (
+            <p className="text-sm text-slate-500">
+              Showing {filteredCompanies.length} of {companies.length} companies
+            </p>
+          )}
         </div>
+
+        {loading && (
+          <div className="flex min-h-[250px] items-center justify-center">
+            <div className="flex items-center gap-2 text-slate-500">
+              <Loader2 className="h-5 w-5 animate-spin" />
+              Loading companies...
+            </div>
+          </div>
+        )}
+
+        {!loading && filteredCompanies.length === 0 && (
+          <div className="rounded-xl border bg-white p-10 text-center shadow-sm">
+            <h3 className="text-lg font-semibold text-slate-900">
+              No companies found
+            </h3>
+            <p className="mt-2 text-sm text-slate-500">
+              Try searching with a different company name, industry, or
+              location.
+            </p>
+          </div>
+        )}
+
+        {!loading && filteredCompanies.length > 0 && (
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
+            {filteredCompanies.map((company) => (
+              <CompanyCard key={company.id} company={company} />
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );

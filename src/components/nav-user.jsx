@@ -25,9 +25,8 @@ import {
 export function NavUser({ user }) {
   const { isMobile } = useSidebar();
 
-  // handle exit dashboard take user to homepage and clear localStorage
+  // handle exit dashboard take user to homepage
   const handleExitDashboard = () => {
-    localStorage.clear();
     window.location.href = "/";
   };
 

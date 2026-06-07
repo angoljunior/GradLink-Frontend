@@ -1,4 +1,12 @@
-import { Search, MapPin, BriefcaseBusiness, Building2, GraduationCap, Star } from "lucide-react";
+import {
+  Search,
+  MapPin,
+  BriefcaseBusiness,
+  Building2,
+  GraduationCap,
+  Star,
+} from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -27,16 +35,30 @@ const stats = [
   },
 ];
 
-const HeroSection = () => {
+const HeroSection = ({
+  jobSearch,
+  setJobSearch,
+  locationSearch,
+  setLocationSearch,
+}) => {
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    const employersSection = document.getElementById("top-employers");
+
+    if (employersSection) {
+      employersSection.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  };
+
   return (
     <section className="relative min-h-[calc(100vh-48px)] overflow-hidden bg-gradient-to-b from-[#faf9f4] via-[#f9faf7] to-[#eef8f2] dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
-      
-      {/* Soft dotted background */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(15,23,42,0.08)_1px,transparent_0)] [background-size:24px_24px] opacity-40" />
 
-      <div className="relative max-w-7xl mx-auto px-6 pt-28 pb-20">
-        
-        {/* Badge */}
+      <div className="relative mx-auto max-w-7xl px-6 pb-20 pt-28">
         <div className="flex justify-center">
           <Badge
             variant="outline"
@@ -46,73 +68,78 @@ const HeroSection = () => {
           </Badge>
         </div>
 
-        {/* Heading */}
-        <div className="text-center mt-8">
-          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-slate-950 leading-tight">
+        <div className="mt-8 text-center">
+          <h1 className="text-5xl font-extrabold leading-tight tracking-tight text-slate-950 md:text-7xl">
             Where Ambition Meets
           </h1>
 
-          <h2 className="mt-2 text-5xl md:text-7xl font-extrabold tracking-tight leading-tight bg-gradient-to-r from-yellow-500 via-lime-500 to-emerald-500 bg-clip-text text-transparent">
+          <h2 className="mt-2 bg-gradient-to-r from-yellow-500 via-lime-500 to-emerald-500 bg-clip-text text-5xl font-extrabold leading-tight tracking-tight text-transparent md:text-7xl">
             Opportunity
           </h2>
 
-          <p className="mt-6 max-w-2xl mx-auto text-lg md:text-xl text-slate-500 leading-relaxed">
+          <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-slate-500 md:text-xl">
             Connect with top employers in Ghana. Find graduate programs,
             internships, and national service opportunities tailored for you.
           </p>
         </div>
 
-        {/* Search Bar */}
-        <Card className="mt-10 max-w-4xl mx-auto border border-gray-200 bg-white/90 shadow-2xl shadow-slate-300/40 rounded-xl">
+        <Card className="mx-auto mt-10 max-w-4xl rounded-xl border border-gray-200 bg-white/90 shadow-2xl shadow-slate-300/40">
           <CardContent className="p-3">
-            <div className="flex flex-col md:flex-row items-center gap-3">
-              
-              {/* Job Search */}
-              <div className="flex items-center gap-3 w-full px-3">
-                <Search className="w-5 h-5 text-slate-500" />
+            <form
+              onSubmit={handleSubmit}
+              className="flex flex-col items-center gap-3 md:flex-row"
+            >
+              <div className="flex w-full items-center gap-3 px-3">
+                <Search className="h-5 w-5 text-slate-500" />
                 <Input
                   type="text"
-                  placeholder="Job title, skills, or company"
-                  className="border-0 shadow-none focus-visible:ring-0 text-sm"
+                  value={jobSearch}
+                  onChange={(e) => setJobSearch(e.target.value)}
+                  placeholder="Job title, skills, company, or industry"
+                  className="border-0 text-sm shadow-none focus-visible:ring-0"
                 />
               </div>
 
-              <div className="hidden md:block h-8 w-px bg-gray-200" />
+              <div className="hidden h-8 w-px bg-gray-200 md:block" />
 
-              {/* Location Search */}
-              <div className="flex items-center gap-3 w-full px-3">
-                <MapPin className="w-5 h-5 text-slate-500" />
+              <div className="flex w-full items-center gap-3 px-3">
+                <MapPin className="h-5 w-5 text-slate-500" />
                 <Input
                   type="text"
-                  placeholder="City or Region (e.g. Accra, Kumasi)"
-                  className="border-0 shadow-none focus-visible:ring-0 text-sm"
+                  value={locationSearch}
+                  onChange={(e) => setLocationSearch(e.target.value)}
+                  placeholder="City or Region e.g. Accra, Kumasi"
+                  className="border-0 text-sm shadow-none focus-visible:ring-0"
                 />
               </div>
 
-              <Button className="w-full md:w-40 h-11 bg-yellow-500 hover:bg-yellow-600 text-black font-semibold rounded-lg">
+              <Button
+                type="submit"
+                className="h-11 w-full rounded-lg bg-yellow-500 font-semibold text-black hover:bg-yellow-600 md:w-40"
+              >
                 Find Jobs
               </Button>
-            </div>
+            </form>
           </CardContent>
         </Card>
 
-        {/* Stats */}
-        <div className="mt-14 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-5xl mx-auto">
+        <div className="mx-auto mt-14 grid max-w-5xl grid-cols-2 gap-6 md:grid-cols-4">
           {stats.map((item, index) => {
             const Icon = item.icon;
 
             return (
               <Card
                 key={index}
-                className="border-0 bg-transparent shadow-none text-center"
+                className="border-0 bg-transparent text-center shadow-none"
               >
                 <CardContent className="p-0">
                   <div className="flex items-center justify-center gap-2">
-                    <Icon className="w-4 h-4 text-slate-400" />
+                    <Icon className="h-4 w-4 text-slate-400" />
                     <h3 className="text-3xl font-extrabold text-slate-950">
                       {item.value}
                     </h3>
                   </div>
+
                   <p className="text-sm text-slate-500">{item.label}</p>
                 </CardContent>
               </Card>

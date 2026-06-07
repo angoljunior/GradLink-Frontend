@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
-
+import GoogleAuthButton from "@/components/GoogleAuthButton";
 import axios from "@/api/axios";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
@@ -101,8 +101,6 @@ export function SignupForm({ className, ...props }) {
           <p className="text-sm text-balance text-muted-foreground mb-2">
             Fill in the form below to create your account
           </p>
-
-          {/* <AuthToggle /> */}
         </div>
 
         {error && <p className="text-sm text-red-500 text-center">{error}</p>}
@@ -226,9 +224,7 @@ export function SignupForm({ className, ...props }) {
         <FieldSeparator>Or continue with</FieldSeparator>
 
         <Field>
-          <Button variant="outline" type="button">
-            Sign up with GitHub
-          </Button>
+          <GoogleAuthButton role={role} />
 
           <FieldDescription className="px-6 text-center">
             Already have an account?{" "}
