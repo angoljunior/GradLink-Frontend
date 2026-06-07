@@ -62,11 +62,15 @@ export function SignupForm({ className, ...props }) {
 
       const data = response.data;
 
-      localStorage.setItem("access", data.access);
-      localStorage.setItem("refresh", data.refresh);
-      localStorage.setItem("email", data.email);
-      localStorage.setItem("userName", data.name);
-      localStorage.setItem("role", data.role);
+      if (data && data.access) {
+        localStorage.setItem("access", data.access);
+        localStorage.setItem("refresh", data.refresh);
+        localStorage.setItem("email", data.email);
+        localStorage.setItem("role", data.role);
+        localStorage.setItem("isSuperUser", data.isSuperUser);
+        localStorage.setItem("name", data.name);
+        localStorage.setItem("userId", data.userId);
+      }
 
       toast.success("Account created successfully! ✅");
 

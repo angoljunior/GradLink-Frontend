@@ -4,6 +4,7 @@ import { SectionCards } from "@/components/section-cards";
 import data from "@/app/dashboard/data.json";
 import EmployerReport from "@/components/EmployerReport";
 import EApplicants from "@/components/EApplicants";
+import EmployerRecentApplications from "@/components/EmployerRecentApplications";
 
 const EmployerDashboardHome = () => {
   return (
@@ -26,7 +27,8 @@ const EmployerDashboardHome = () => {
           <div className="px-4 lg:px-6"></div>
 
           <EmployerReport />
-          <EApplicants />
+          {/* <EApplicants /> */}
+          <EmployerRecentApplications />
         </div>
       </div>
     </div>

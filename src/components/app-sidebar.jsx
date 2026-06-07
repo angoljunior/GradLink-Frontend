@@ -21,6 +21,7 @@ import {
   Settings2Icon,
   CommandIcon,
   FileTextIcon,
+  BookmarkIcon,
 } from "lucide-react";
 
 const username = localStorage.getItem("name") || "Student";
@@ -47,6 +48,16 @@ const data = {
       title: "CV Builder",
       url: "/student-dashboard/cv-builder",
       icon: FileTextIcon,
+    },
+    {
+      title: "Documents",
+      url: "/student-dashboard/documents",
+      icon: FileTextIcon,
+    },
+    {
+      title: "Saved Jobs",
+      url: "/student-dashboard/saved-jobs",
+      icon: BookmarkIcon,
     },
     {
       title: "Notifications",

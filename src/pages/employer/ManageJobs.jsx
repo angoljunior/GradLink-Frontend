@@ -1,5 +1,16 @@
-import React, { useMemo, useState } from "react";
-import { Briefcase, Plus, Search, Pencil, Trash2, Eye, X } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  Briefcase,
+  Plus,
+  Search,
+  Pencil,
+  Trash2,
+  Eye,
+  X,
+  Loader2,
+} from "lucide-react";
+import { toast } from "sonner";
+import { Link } from "react-router-dom";
 
 import {
   Table,
@@ -11,184 +22,317 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-const initialJobs = [
-  {
-    id: 1,
-    title: "Electrical Engineering Intern",
-    department: "Engineering",
-    location: "Obuasi, Ghana",
-    type: "Internship",
-    status: "Open",
-    applicants: 24,
-    posted: "2 hours ago",
-  },
-  {
-    id: 2,
-    title: "Graduate Trainee Engineer",
-    department: "Operations",
-    location: "Accra, Ghana",
-    type: "Full-time",
-    status: "Open",
-    applicants: 18,
-    posted: "1 day ago",
-  },
-  {
-    id: 3,
-    title: "Junior Frontend Developer",
-    department: "Software",
-    location: "Remote",
-    type: "Contract",
-    status: "Closed",
-    applicants: 36,
-    posted: "5 days ago",
-  },
-  {
-    id: 4,
-    title: "Control and Instrumentation Intern",
-    department: "Maintenance",
-    location: "Tarkwa, Ghana",
-    type: "Internship",
-    status: "Open",
-    applicants: 12,
-    posted: "1 week ago",
-  },
-];
+import api from "@/api/axios";
+
+const emptyForm = {
+  title: "",
+  category: "",
+  description: "",
+  responsibilities: "",
+  requirements: "",
+  job_type: "graduate_program",
+  work_mode: "onsite",
+  location: "",
+  salary_min: "",
+  salary_max: "",
+  deadline: "",
+  is_active: true,
+};
 
 const ManageJobs = () => {
-  const [jobs, setJobs] = useState(initialJobs);
+  const [jobs, setJobs] = useState([]);
+  const [categories, setCategories] = useState([]);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+
   const [showForm, setShowForm] = useState(false);
   const [editingJobId, setEditingJobId] = useState(null);
 
-  const [formData, setFormData] = useState({
-    title: "",
-    department: "",
-    location: "",
-    type: "Full-time",
-    status: "Open",
-  });
+  const [formData, setFormData] = useState(emptyForm);
+
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
+
+  const getArrayData = (data) => {
+    return Array.isArray(data) ? data : data.results || [];
+  };
+
+  const fetchEmployerJobs = async () => {
+    try {
+      setLoading(true);
+
+      const [jobsResponse, categoriesResponse] = await Promise.all([
+        api.get("/employer/jobs/"),
+        api.get("/job-categories/"),
+      ]);
+
+      setJobs(getArrayData(jobsResponse.data));
+      setCategories(getArrayData(categoriesResponse.data));
+    } catch (error) {
+      console.log(
+        "Failed to fetch employer jobs:",
+        error.response?.data || error,
+      );
+
+      toast.error("Failed to load jobs", {
+        description:
+          error.response?.data?.detail ||
+          "Please refresh the page and try again.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchEmployerJobs();
+  }, []);
 
   const filteredJobs = useMemo(() => {
     return jobs.filter((job) => {
-      const searchValue = searchTerm.toLowerCase();
+      const searchValue = searchTerm.toLowerCase().trim();
+
+      const categoryName =
+        job.category_details?.name?.toLowerCase() ||
+        job.category?.name?.toLowerCase() ||
+        "";
 
       const matchesSearch =
-        job.title.toLowerCase().includes(searchValue) ||
-        job.department.toLowerCase().includes(searchValue) ||
-        job.location.toLowerCase().includes(searchValue) ||
-        job.type.toLowerCase().includes(searchValue);
+        job.title?.toLowerCase().includes(searchValue) ||
+        job.location?.toLowerCase().includes(searchValue) ||
+        job.job_type_display?.toLowerCase().includes(searchValue) ||
+        job.work_mode_display?.toLowerCase().includes(searchValue) ||
+        categoryName.includes(searchValue);
+
+      const statusValue = job.is_active ? "Open" : "Closed";
 
       const matchesStatus =
-        statusFilter === "All" || job.status === statusFilter;
+        statusFilter === "All" || statusValue === statusFilter;
 
       return matchesSearch && matchesStatus;
     });
   }, [jobs, searchTerm, statusFilter]);
 
   const resetForm = () => {
-    setFormData({
-      title: "",
-      department: "",
-      location: "",
-      type: "Full-time",
-      status: "Open",
-    });
-
+    setFormData(emptyForm);
     setEditingJobId(null);
     setShowForm(false);
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
 
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
-  const handleSubmit = (e) => {
+  const buildPayload = () => {
+    return {
+      title: formData.title,
+      category: formData.category ? Number(formData.category) : null,
+      description: formData.description,
+      responsibilities: formData.responsibilities,
+      requirements: formData.requirements,
+      job_type: formData.job_type,
+      work_mode: formData.work_mode,
+      location: formData.location,
+      salary_min: formData.salary_min || null,
+      salary_max: formData.salary_max || null,
+      deadline: formData.deadline,
+      is_active: formData.is_active,
+    };
+  };
+
+  const validateForm = () => {
+    if (!formData.title.trim()) return "Job title is required.";
+    if (!formData.category) return "Job category is required.";
+    if (!formData.description.trim()) return "Job description is required.";
+    if (!formData.responsibilities.trim())
+      return "Responsibilities are required.";
+    if (!formData.requirements.trim()) return "Requirements are required.";
+    if (!formData.location.trim()) return "Location is required.";
+    if (!formData.deadline) return "Application deadline is required.";
+
+    return null;
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.title || !formData.department || !formData.location) {
-      alert("Please fill in all required fields.");
+    const validationError = validateForm();
+
+    if (validationError) {
+      toast.warning("Missing information", {
+        description: validationError,
+      });
       return;
     }
 
-    if (editingJobId) {
-      setJobs((prevJobs) =>
-        prevJobs.map((job) =>
-          job.id === editingJobId
-            ? {
-                ...job,
-                ...formData,
-              }
-            : job,
-        ),
-      );
-    } else {
-      const newJob = {
-        id: Date.now(),
-        ...formData,
-        applicants: 0,
-        posted: "Just now",
-      };
+    try {
+      setSubmitting(true);
 
-      setJobs((prevJobs) => [newJob, ...prevJobs]);
+      const payload = buildPayload();
+
+      if (editingJobId) {
+        const response = await api.patch(
+          `/employer/jobs/${editingJobId}/`,
+          payload,
+        );
+
+        setJobs((prevJobs) =>
+          prevJobs.map((job) =>
+            job.id === editingJobId ? response.data : job,
+          ),
+        );
+
+        toast.success("Job updated successfully", {
+          description: "Your job post has been updated.",
+        });
+      } else {
+        const response = await api.post("/employer/jobs/", payload);
+
+        setJobs((prevJobs) => [response.data, ...prevJobs]);
+
+        toast.success("Job posted successfully", {
+          description: "Your job has been submitted for approval.",
+        });
+      }
+
+      resetForm();
+    } catch (error) {
+      console.log("Failed to save job:", error.response?.data || error);
+
+      const errorMessage =
+        error.response?.data?.detail ||
+        error.response?.data?.title?.[0] ||
+        error.response?.data?.category?.[0] ||
+        error.response?.data?.description?.[0] ||
+        error.response?.data?.deadline?.[0] ||
+        "Failed to save job. Please check the form and try again.";
+
+      toast.error("Unable to save job", {
+        description: errorMessage,
+      });
+    } finally {
+      setSubmitting(false);
     }
-
-    resetForm();
   };
 
   const handleEdit = (job) => {
     setEditingJobId(job.id);
 
     setFormData({
-      title: job.title,
-      department: job.department,
-      location: job.location,
-      type: job.type,
-      status: job.status,
+      title: job.title || "",
+      category: job.category || job.category_details?.id || "",
+      description: job.description || "",
+      responsibilities: job.responsibilities || "",
+      requirements: job.requirements || "",
+      job_type: job.job_type || "graduate_program",
+      work_mode: job.work_mode || "onsite",
+      location: job.location || "",
+      salary_min: job.salary_min || "",
+      salary_max: job.salary_max || "",
+      deadline: job.deadline || "",
+      is_active: job.is_active,
     });
 
     setShowForm(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleDelete = (jobId) => {
+  const handleDelete = async (jobId) => {
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this job?",
     );
 
     if (!confirmDelete) return;
 
-    setJobs((prevJobs) => prevJobs.filter((job) => job.id !== jobId));
-  };
+    try {
+      setDeletingId(jobId);
 
-  const toggleJobStatus = (jobId) => {
-    setJobs((prevJobs) =>
-      prevJobs.map((job) =>
-        job.id === jobId
-          ? {
-              ...job,
-              status: job.status === "Open" ? "Closed" : "Open",
-            }
-          : job,
-      ),
-    );
-  };
+      await api.delete(`/employer/jobs/${jobId}/`);
 
-  const getStatusStyle = (status) => {
-    switch (status) {
-      case "Open":
-        return "bg-green-100 text-green-700";
-      case "Closed":
-        return "bg-red-100 text-red-700";
-      case "Draft":
-        return "bg-yellow-100 text-yellow-700";
-      default:
-        return "bg-gray-100 text-gray-700";
+      setJobs((prevJobs) => prevJobs.filter((job) => job.id !== jobId));
+
+      toast.success("Job deleted", {
+        description: "The job post has been removed successfully.",
+      });
+    } catch (error) {
+      console.log("Failed to delete job:", error.response?.data || error);
+
+      toast.error("Unable to delete job", {
+        description: error.response?.data?.detail || "Please try again.",
+      });
+    } finally {
+      setDeletingId(null);
     }
+  };
+
+  const toggleJobStatus = async (job) => {
+    try {
+      const response = await api.patch(`/employer/jobs/${job.id}/`, {
+        is_active: !job.is_active,
+      });
+
+      setJobs((prevJobs) =>
+        prevJobs.map((item) => (item.id === job.id ? response.data : item)),
+      );
+
+      toast.success(job.is_active ? "Job closed" : "Job opened", {
+        description: job.is_active
+          ? "This job is no longer active."
+          : "This job is now active.",
+      });
+    } catch (error) {
+      console.log(
+        "Failed to update job status:",
+        error.response?.data || error,
+      );
+
+      toast.error("Unable to update job status", {
+        description: "Please try again.",
+      });
+    }
+  };
+
+  const getStatusStyle = (job) => {
+    if (!job.is_active) return "bg-red-100 text-red-700";
+
+    if (!job.is_approved) return "bg-yellow-100 text-yellow-700";
+
+    return "bg-green-100 text-green-700";
+  };
+
+  const getStatusLabel = (job) => {
+    if (!job.is_active) return "Closed";
+    if (!job.is_approved) return "Pending Approval";
+    return "Open";
+  };
+
+  const formatDate = (dateValue) => {
+    if (!dateValue) return "Not specified";
+
+    return new Date(dateValue).toLocaleDateString("en-GH", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const formatPostedDate = (dateValue) => {
+    if (!dateValue) return "Recently";
+
+    const postedDate = new Date(dateValue);
+    const now = new Date();
+    const diffDays = Math.floor((now - postedDate) / (1000 * 60 * 60 * 24));
+
+    if (diffDays <= 0) return "Today";
+    if (diffDays === 1) return "1 day ago";
+    return `${diffDays} days ago`;
   };
 
   return (
@@ -210,13 +354,7 @@ const ManageJobs = () => {
           onClick={() => {
             setShowForm(true);
             setEditingJobId(null);
-            setFormData({
-              title: "",
-              department: "",
-              location: "",
-              type: "Full-time",
-              status: "Open",
-            });
+            setFormData(emptyForm);
           }}
           className="flex items-center justify-center gap-2 rounded-lg bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
         >
@@ -233,11 +371,12 @@ const ManageJobs = () => {
                 {editingJobId ? "Edit Job" : "Post New Job"}
               </h2>
               <p className="text-sm text-muted-foreground">
-                Fill in the job details below.
+                Fill in the job details below based on your Django Job model.
               </p>
             </div>
 
             <button
+              type="button"
               onClick={resetForm}
               className="rounded-full border p-2 hover:bg-gray-100"
             >
@@ -253,21 +392,56 @@ const ManageJobs = () => {
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
-                placeholder="e.g. Electrical Engineering Intern"
+                placeholder="e.g. Graduate Engineer"
                 className="mt-2 h-11 w-full rounded-md border px-3 text-sm outline-none focus:border-black"
               />
             </div>
 
             <div>
-              <label className="text-sm font-medium">Department</label>
-              <input
-                type="text"
-                name="department"
-                value={formData.department}
+              <label className="text-sm font-medium">Category</label>
+              <select
+                name="category"
+                value={formData.category}
                 onChange={handleChange}
-                placeholder="e.g. Engineering"
                 className="mt-2 h-11 w-full rounded-md border px-3 text-sm outline-none focus:border-black"
-              />
+              >
+                <option value="">Select category</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Job Type</label>
+              <select
+                name="job_type"
+                value={formData.job_type}
+                onChange={handleChange}
+                className="mt-2 h-11 w-full rounded-md border px-3 text-sm outline-none focus:border-black"
+              >
+                <option value="graduate_program">Graduate Program</option>
+                <option value="internship">Internship</option>
+                <option value="entry_level">Entry Level Job</option>
+                <option value="national_service">National Service</option>
+                <option value="trainee">Trainee Program</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Work Mode</label>
+              <select
+                name="work_mode"
+                value={formData.work_mode}
+                onChange={handleChange}
+                className="mt-2 h-11 w-full rounded-md border px-3 text-sm outline-none focus:border-black"
+              >
+                <option value="onsite">On-site</option>
+                <option value="remote">Remote</option>
+                <option value="hybrid">Hybrid</option>
+              </select>
             </div>
 
             <div>
@@ -283,42 +457,103 @@ const ManageJobs = () => {
             </div>
 
             <div>
-              <label className="text-sm font-medium">Job Type</label>
-              <select
-                name="type"
-                value={formData.type}
+              <label className="text-sm font-medium">Deadline</label>
+              <input
+                type="date"
+                name="deadline"
+                value={formData.deadline}
                 onChange={handleChange}
                 className="mt-2 h-11 w-full rounded-md border px-3 text-sm outline-none focus:border-black"
-              >
-                <option value="Full-time">Full-time</option>
-                <option value="Part-time">Part-time</option>
-                <option value="Internship">Internship</option>
-                <option value="National Service">National Service</option>
-                <option value="Contract">Contract</option>
-                <option value="Remote">Remote</option>
-              </select>
+              />
             </div>
 
             <div>
-              <label className="text-sm font-medium">Status</label>
-              <select
-                name="status"
-                value={formData.status}
+              <label className="text-sm font-medium">Minimum Salary</label>
+              <input
+                type="number"
+                name="salary_min"
+                value={formData.salary_min}
                 onChange={handleChange}
+                placeholder="e.g. 2500"
                 className="mt-2 h-11 w-full rounded-md border px-3 text-sm outline-none focus:border-black"
-              >
-                <option value="Open">Open</option>
-                <option value="Closed">Closed</option>
-                <option value="Draft">Draft</option>
-              </select>
+              />
             </div>
 
-            <div className="flex items-end justify-start gap-3">
+            <div>
+              <label className="text-sm font-medium">Maximum Salary</label>
+              <input
+                type="number"
+                name="salary_max"
+                value={formData.salary_max}
+                onChange={handleChange}
+                placeholder="e.g. 5000"
+                className="mt-2 h-11 w-full rounded-md border px-3 text-sm outline-none focus:border-black"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="text-sm font-medium">Job Description</label>
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                rows="4"
+                placeholder="Describe the job..."
+                className="mt-2 w-full rounded-md border px-3 py-2 text-sm outline-none focus:border-black"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="text-sm font-medium">Responsibilities</label>
+              <textarea
+                name="responsibilities"
+                value={formData.responsibilities}
+                onChange={handleChange}
+                rows="4"
+                placeholder="Write each responsibility on a new line..."
+                className="mt-2 w-full rounded-md border px-3 py-2 text-sm outline-none focus:border-black"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="text-sm font-medium">Requirements</label>
+              <textarea
+                name="requirements"
+                value={formData.requirements}
+                onChange={handleChange}
+                rows="4"
+                placeholder="Write each requirement on a new line..."
+                className="mt-2 w-full rounded-md border px-3 py-2 text-sm outline-none focus:border-black"
+              />
+            </div>
+
+            <div className="md:col-span-2 flex items-center gap-2">
+              <input
+                id="is_active"
+                type="checkbox"
+                name="is_active"
+                checked={formData.is_active}
+                onChange={handleChange}
+                className="h-4 w-4"
+              />
+              <label htmlFor="is_active" className="text-sm font-medium">
+                Make this job active
+              </label>
+            </div>
+
+            <div className="flex items-end justify-start gap-3 md:col-span-2">
               <button
                 type="submit"
-                className="rounded-lg bg-black px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-800"
+                disabled={submitting}
+                className="rounded-lg bg-black px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {editingJobId ? "Update Job" : "Save Job"}
+                {submitting
+                  ? editingJobId
+                    ? "Updating..."
+                    : "Posting..."
+                  : editingJobId
+                    ? "Update Job"
+                    : "Post Job"}
               </button>
 
               <button
@@ -362,97 +597,126 @@ const ManageJobs = () => {
               <option value="All">All Status</option>
               <option value="Open">Open</option>
               <option value="Closed">Closed</option>
-              <option value="Draft">Draft</option>
             </select>
           </div>
         </div>
 
-        <Table>
-          <TableCaption>A list of jobs posted by your company.</TableCaption>
+        {loading ? (
+          <div className="flex min-h-[250px] items-center justify-center">
+            <div className="flex items-center gap-2 text-slate-500">
+              <Loader2 className="h-5 w-5 animate-spin" />
+              Loading jobs...
+            </div>
+          </div>
+        ) : (
+          <Table>
+            <TableCaption>A list of jobs posted by your company.</TableCaption>
 
-          <TableHeader>
-            <TableRow>
-              <TableHead>Job Title</TableHead>
-              <TableHead>Department</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Applicants</TableHead>
-              <TableHead>Posted</TableHead>
-              <TableHead className="text-right">Action</TableHead>
-            </TableRow>
-          </TableHeader>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Job Title</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Location</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Applicants</TableHead>
+                <TableHead>Posted</TableHead>
+                <TableHead className="text-right">Action</TableHead>
+              </TableRow>
+            </TableHeader>
 
-          <TableBody>
-            {filteredJobs.length > 0 ? (
-              filteredJobs.map((job) => (
-                <TableRow key={job.id}>
-                  <TableCell className="font-medium">{job.title}</TableCell>
-                  <TableCell>{job.department}</TableCell>
-                  <TableCell>{job.location}</TableCell>
-                  <TableCell>{job.type}</TableCell>
-
-                  <TableCell>
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-medium ${getStatusStyle(
-                        job.status,
-                      )}`}
-                    >
-                      {job.status}
-                    </span>
-                  </TableCell>
-
-                  <TableCell>{job.applicants}</TableCell>
-                  <TableCell>{job.posted}</TableCell>
-
-                  <TableCell>
-                    <div className="flex justify-end gap-2">
-                      <button
-                        title="View applicants"
-                        className="rounded-md border p-2 hover:bg-gray-100"
+            <TableBody>
+              {filteredJobs.length > 0 ? (
+                filteredJobs.map((job) => (
+                  <TableRow key={job.id}>
+                    <TableCell className="font-medium">
+                      <Link
+                        to={`/job/${job.id}`}
+                        className="hover:text-yellow-700 hover:underline"
                       >
-                        <Eye className="h-4 w-4" />
-                      </button>
+                        {job.title}
+                      </Link>
+                    </TableCell>
 
-                      <button
-                        title="Edit job"
-                        onClick={() => handleEdit(job)}
-                        className="rounded-md border p-2 hover:bg-gray-100"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </button>
+                    <TableCell>
+                      {job.category_details?.name || "Not specified"}
+                    </TableCell>
 
-                      <button
-                        title={job.status === "Open" ? "Close job" : "Open job"}
-                        onClick={() => toggleJobStatus(job.id)}
-                        className="rounded-md border px-3 py-2 text-xs hover:bg-gray-100"
-                      >
-                        {job.status === "Open" ? "Close" : "Open"}
-                      </button>
+                    <TableCell>{job.location}</TableCell>
 
-                      <button
-                        title="Delete job"
-                        onClick={() => handleDelete(job.id)}
-                        className="rounded-md border p-2 text-red-600 hover:bg-red-50"
+                    <TableCell>
+                      {job.job_type_display || job.job_type}
+                    </TableCell>
+
+                    <TableCell>
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-medium ${getStatusStyle(
+                          job,
+                        )}`}
                       >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
+                        {getStatusLabel(job)}
+                      </span>
+                    </TableCell>
+
+                    <TableCell>{job.applicants_count || 0}</TableCell>
+
+                    <TableCell>{formatPostedDate(job.posted_at)}</TableCell>
+
+                    <TableCell>
+                      <div className="flex justify-end gap-2">
+                        <Link
+                          to={`/employer-dashboard/applicants?job=${job.id}`}
+                          title="View applicants"
+                          className="rounded-md border p-2 hover:bg-gray-100"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Link>
+
+                        <button
+                          title="Edit job"
+                          onClick={() => handleEdit(job)}
+                          className="rounded-md border p-2 hover:bg-gray-100"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+
+                        <button
+                          title={job.is_active ? "Close job" : "Open job"}
+                          onClick={() => toggleJobStatus(job)}
+                          className="rounded-md border px-3 py-2 text-xs hover:bg-gray-100"
+                        >
+                          {job.is_active ? "Close" : "Open"}
+                        </button>
+
+                        <button
+                          title="Delete job"
+                          onClick={() => handleDelete(job.id)}
+                          disabled={deletingId === job.id}
+                          className="rounded-md border p-2 text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {deletingId === job.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={8}
+                    className="py-8 text-center text-muted-foreground"
+                  >
+                    No jobs found.
                   </TableCell>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={8}
-                  className="py-8 text-center text-muted-foreground"
-                >
-                  No jobs found.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              )}
+            </TableBody>
+          </Table>
+        )}
       </div>
     </div>
   );

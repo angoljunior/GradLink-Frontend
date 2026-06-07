@@ -43,7 +43,7 @@ const JobDetailsHeader = ({ job }) => {
     email: "",
     phone: "",
     portfolio: "",
-    coverLetter: "",
+    coverLetter: null,
     cv: null,
     transcript: null,
   });
@@ -166,7 +166,7 @@ const JobDetailsHeader = ({ job }) => {
 
     if (!applicationData.coverLetter) {
       toast.warning("Cover letter required", {
-        description: "Please write a short cover letter before submitting.",
+        description: "Please upload your cover letter before submitting.",
       });
       return;
     }
@@ -179,24 +179,26 @@ const JobDetailsHeader = ({ job }) => {
     }
 
     const formData = new FormData();
+
     formData.append("job", job.id);
     formData.append("cover_letter", applicationData.coverLetter);
-
-    if (applicationData.cv) {
-      formData.append("cv", applicationData.cv);
-    }
+    formData.append("cv", applicationData.cv);
 
     if (applicationData.transcript) {
       formData.append("transcript", applicationData.transcript);
     }
 
-    /*
-      Your JobApplication model only has:
-      job, cover_letter, cv, transcript
+    if (applicationData.email) {
+      formData.append("email", applicationData.email);
+    }
 
-      fullName, email, phone, and portfolio are useful on the frontend,
-      but unless your backend serializer accepts them, don't send them.
-    */
+    if (applicationData.phone) {
+      formData.append("phone", applicationData.phone);
+    }
+
+    if (applicationData.portfolio) {
+      formData.append("portfolio", applicationData.portfolio);
+    }
 
     try {
       setApplying(true);
@@ -218,7 +220,7 @@ const JobDetailsHeader = ({ job }) => {
         email: "",
         phone: "",
         portfolio: "",
-        coverLetter: "",
+        coverLetter: null,
         cv: null,
         transcript: null,
       });
@@ -227,11 +229,17 @@ const JobDetailsHeader = ({ job }) => {
     } catch (error) {
       console.log("Application failed:", error.response?.data || error);
 
+      const data = error.response?.data;
+
       const errorMessage =
-        error.response?.data?.detail ||
-        error.response?.data?.non_field_errors?.[0] ||
-        error.response?.data?.job?.[0] ||
-        error.response?.data?.cover_letter?.[0] ||
+        data?.detail ||
+        data?.non_field_errors?.[0] ||
+        data?.job?.[0] ||
+        data?.cover_letter?.[0] ||
+        data?.cv?.[0] ||
+        data?.email?.[0] ||
+        data?.phone?.[0] ||
+        data?.portfolio?.[0] ||
         "Failed to submit application. You may have already applied for this job.";
 
       toast.error("Application failed", {
@@ -464,16 +472,17 @@ const JobDetailsHeader = ({ job }) => {
 
                   <Field>
                     <Label htmlFor="coverLetter">Cover Letter</Label>
-                    <textarea
+                    <Input
                       id="coverLetter"
                       name="coverLetter"
-                      rows="5"
-                      placeholder="Briefly tell the employer why you are a good fit for this role..."
-                      value={applicationData.coverLetter}
+                      type="file"
+                      accept=".pdf,.doc,.docx"
                       onChange={handleApplicationChange}
-                      className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:border-black"
                       required
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Accepted formats: PDF, DOC, DOCX
+                    </p>
                   </Field>
                 </FieldGroup>
 

@@ -27,6 +27,7 @@ import CVBuilder from "./pages/student/CVBuilder";
 import EmployerDashboard from "./pages/employer/EmployerDashboard";
 import EmployerDashboardHome from "./pages/employer/EmployerDashboardHome";
 import ManageJobs from "./pages/employer/ManageJobs";
+import SavedJobs from "./pages/student/SavedJobs";
 import Applicants from "./pages/employer/Applicants";
 
 import "./App.css";
@@ -69,6 +70,7 @@ function App() {
           <Route path="applications" element={<MyApplications />} />
           <Route path="cv-builder" element={<CVBuilder />} />
           <Route path="documents" element={<StudentDocuments />} />
+          <Route path="saved-jobs" element={<SavedJobs />} />
           <Route path="notifications" element={<StudentNotifications />} />
           <Route path="settings" element={<StudentSettings />} />
         </Route>
@@ -78,7 +80,6 @@ function App() {
           <Route index element={<EmployerDashboardHome />} />
           <Route path="manage-jobs" element={<ManageJobs />} />
           <Route path="applicants" element={<Applicants />} />
-          <Route path="documents" element={<StudentDocuments />} />
           <Route path="settings" element={<StudentSettings />} />
         </Route>
       </Routes>

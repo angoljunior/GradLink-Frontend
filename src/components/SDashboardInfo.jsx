@@ -9,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import MyApplications from "@/pages/student/MyApplications";
 
 const applications = [
   {
@@ -95,88 +96,9 @@ const SDashboardInfo = () => {
   };
 
   return (
-    <div className="rounded-xl border bg-white p-5 shadow-sm mx-4">
-      <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h2 className="text-xl font-semibold">Recent Job Applications</h2>
-          <p className="text-sm text-muted-foreground">
-            Track the latest jobs you have applied for.
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <input
-            type="text"
-            placeholder="Search job or company..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="h-10 rounded-md border px-3 text-sm outline-none focus:border-black"
-          />
-
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-10 rounded-md border px-3 text-sm outline-none focus:border-black"
-          >
-            <option value="All">All Status</option>
-            <option value="Pending">Pending</option>
-            <option value="Reviewed">Reviewed</option>
-            <option value="Accepted">Accepted</option>
-            <option value="Rejected">Rejected</option>
-          </select>
-        </div>
-      </div>
-
-      <Table>
-        <TableCaption>A list of your recent job applications.</TableCaption>
-
-        <TableHeader>
-          <TableRow>
-            <TableHead>Job Title</TableHead>
-            <TableHead>Company</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Date Applied</TableHead>
-          </TableRow>
-        </TableHeader>
-
-        <TableBody>
-          {filteredApplications.length > 0 ? (
-            filteredApplications.map((application) => (
-              <TableRow key={application.id}>
-                <TableCell className="font-medium">
-                  {application.jobTitle}
-                </TableCell>
-
-                <TableCell>{application.company}</TableCell>
-
-                <TableCell>
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-medium ${getStatusStyle(
-                      application.status,
-                    )}`}
-                  >
-                    {application.status}
-                  </span>
-                </TableCell>
-
-                <TableCell className="text-right">
-                  {application.dateApplied}
-                </TableCell>
-              </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell
-                colSpan={4}
-                className="py-8 text-center text-muted-foreground"
-              >
-                No applications found.
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </div>
+    <>
+      <MyApplications />
+    </>
   );
 };
 
