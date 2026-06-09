@@ -22,6 +22,7 @@ import {
   CommandIcon,
   FileTextIcon,
   BookmarkIcon,
+  MailIcon,
 } from "lucide-react";
 
 const username = localStorage.getItem("name") || "Student";
@@ -58,6 +59,11 @@ const data = {
       title: "Saved Jobs",
       url: "/student-dashboard/saved-jobs",
       icon: BookmarkIcon,
+    },
+    {
+      title: "Messages",
+      url: "/student-dashboard/messages",
+      icon: MailIcon,
     },
     {
       title: "Notifications",

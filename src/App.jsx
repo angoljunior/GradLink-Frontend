@@ -19,7 +19,7 @@ import Register from "./pages/Register";
 import StudentDashboard from "./pages/student/StudentDashboard";
 import StudentDashboardHome from "./pages/student/StudentDashboardHome";
 import MyApplications from "./pages/student/MyApplications";
-import StudentNotifications from "./pages/student/StudentNotifications";
+import Notifications from "./pages/student/Notifications";
 import StudentSettings from "./pages/student/StudentSettings";
 import StudentDocuments from "./pages/student/StudentDocuments";
 import CVBuilder from "./pages/student/CVBuilder";
@@ -31,6 +31,7 @@ import SavedJobs from "./pages/student/SavedJobs";
 import Applicants from "./pages/employer/Applicants";
 
 import "./App.css";
+import Messages from "./pages/student/Messages";
 
 function MainLayout() {
   return (
@@ -71,7 +72,8 @@ function App() {
           <Route path="cv-builder" element={<CVBuilder />} />
           <Route path="documents" element={<StudentDocuments />} />
           <Route path="saved-jobs" element={<SavedJobs />} />
-          <Route path="notifications" element={<StudentNotifications />} />
+          <Route path="messages" element={<Messages />} />
+          <Route path="notifications" element={<Notifications />} />
           <Route path="settings" element={<StudentSettings />} />
         </Route>
 

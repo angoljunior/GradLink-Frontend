@@ -8,6 +8,7 @@ import {
   GraduationCap,
   BriefcaseBusiness,
   X,
+  Eye,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -32,10 +33,21 @@ import {
 } from "@/components/ui/dialog";
 
 import api from "@/api/axios";
+import MessageCandidateDialog from "./employer/MessageCandidateDialog";
+
+const statusOptions = [
+  { value: "submitted", label: "Submitted" },
+  { value: "reviewed", label: "Reviewed" },
+  { value: "shortlisted", label: "Shortlisted" },
+  { value: "interview", label: "Interview" },
+  { value: "accepted", label: "Accepted" },
+  { value: "rejected", label: "Rejected" },
+];
 
 const EmployerRecentApplications = () => {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [updatingStatusId, setUpdatingStatusId] = useState(null);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -82,12 +94,14 @@ const EmployerRecentApplications = () => {
       const role = application.role?.toLowerCase() || "";
       const university = application.university?.toLowerCase() || "";
       const programme = application.programme?.toLowerCase() || "";
+      const email = application.candidate_email?.toLowerCase() || "";
 
       const matchesSearch =
         candidate.includes(searchValue) ||
         role.includes(searchValue) ||
         university.includes(searchValue) ||
-        programme.includes(searchValue);
+        programme.includes(searchValue) ||
+        email.includes(searchValue);
 
       const matchesStatus =
         statusFilter === "All" || application.status === statusFilter;
@@ -99,6 +113,61 @@ const EmployerRecentApplications = () => {
   const handleViewApplication = (application) => {
     setSelectedApplication(application);
     setOpenDetails(true);
+  };
+
+  const handleStatusUpdate = async (application, newStatus) => {
+    if (application.status === newStatus) return;
+
+    try {
+      setUpdatingStatusId(application.id);
+
+      const response = await api.patch(
+        `/employer/applications/${application.id}/status/`,
+        {
+          status: newStatus,
+        },
+      );
+
+      const updatedStatusLabel =
+        statusOptions.find((item) => item.value === newStatus)?.label ||
+        newStatus;
+
+      setApplications((prevApplications) =>
+        prevApplications.map((item) =>
+          item.id === application.id
+            ? {
+                ...item,
+                status: newStatus,
+                status_display: updatedStatusLabel,
+              }
+            : item,
+        ),
+      );
+
+      if (selectedApplication?.id === application.id) {
+        setSelectedApplication((prev) => ({
+          ...prev,
+          status: newStatus,
+          status_display: updatedStatusLabel,
+        }));
+      }
+
+      toast.success("Application status updated", {
+        description:
+          response.data?.message ||
+          `The applicant has been marked as ${updatedStatusLabel}.`,
+      });
+    } catch (error) {
+      console.log("Status update failed:", error.response?.data || error);
+
+      toast.error("Failed to update status", {
+        description:
+          error.response?.data?.detail ||
+          "Please try again. The applicant was not notified.",
+      });
+    } finally {
+      setUpdatingStatusId(null);
+    }
   };
 
   const getStatusStyle = (status) => {
@@ -122,7 +191,37 @@ const EmployerRecentApplications = () => {
 
   const getFileName = (fileUrl) => {
     if (!fileUrl) return "";
-    return fileUrl.split("/").pop();
+    return decodeURIComponent(fileUrl.split("/").pop());
+  };
+
+  const DocumentCard = ({ label, fileUrl }) => {
+    if (!fileUrl) {
+      return (
+        <div className="rounded-xl border bg-slate-50 p-4 text-sm text-muted-foreground">
+          No {label.toLowerCase()} uploaded.
+        </div>
+      );
+    }
+
+    return (
+      <a
+        href={fileUrl}
+        target="_blank"
+        rel="noreferrer"
+        className="flex items-center justify-between rounded-xl border bg-white p-4 text-sm transition hover:bg-slate-50"
+      >
+        <div className="flex items-center gap-3">
+          <FileText className="h-5 w-5 text-yellow-600" />
+
+          <div>
+            <p className="font-medium text-slate-900">{label}</p>
+            <p className="text-xs text-slate-500">{getFileName(fileUrl)}</p>
+          </div>
+        </div>
+
+        <Download className="h-4 w-4 text-slate-500" />
+      </a>
+    );
   };
 
   return (
@@ -155,12 +254,11 @@ const EmployerRecentApplications = () => {
               className="h-10 rounded-md border px-3 text-sm outline-none focus:border-black"
             >
               <option value="All">All Status</option>
-              <option value="submitted">Submitted</option>
-              <option value="reviewed">Reviewed</option>
-              <option value="shortlisted">Shortlisted</option>
-              <option value="interview">Interview</option>
-              <option value="accepted">Accepted</option>
-              <option value="rejected">Rejected</option>
+              {statusOptions.map((status) => (
+                <option key={status.value} value={status.value}>
+                  {status.label}
+                </option>
+              ))}
             </select>
           </div>
         </div>
@@ -184,7 +282,8 @@ const EmployerRecentApplications = () => {
                 <TableHead>Role</TableHead>
                 <TableHead>University</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="text-right">Applied</TableHead>
+                <TableHead>Applied</TableHead>
+                <TableHead className="text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
 
@@ -219,24 +318,59 @@ const EmployerRecentApplications = () => {
                     </TableCell>
 
                     <TableCell>
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-medium ${getStatusStyle(
-                          application.status,
-                        )}`}
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-medium ${getStatusStyle(
+                            application.status,
+                          )}`}
+                        >
+                          {application.status_display}
+                        </span>
+
+                        {updatingStatusId === application.id && (
+                          <Loader2 className="h-4 w-4 animate-spin text-slate-500" />
+                        )}
+                      </div>
+
+                      <select
+                        value={application.status}
+                        disabled={updatingStatusId === application.id}
+                        onChange={(e) =>
+                          handleStatusUpdate(application, e.target.value)
+                        }
+                        className="mt-2 h-8 rounded-md border px-2 text-xs outline-none focus:border-black disabled:cursor-not-allowed disabled:opacity-60"
                       >
-                        {application.status_display}
-                      </span>
+                        {statusOptions.map((status) => (
+                          <option key={status.value} value={status.value}>
+                            {status.label}
+                          </option>
+                        ))}
+                      </select>
                     </TableCell>
 
+                    <TableCell>{application.applied}</TableCell>
+
                     <TableCell className="text-right">
-                      {application.applied}
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewApplication(application)}
+                        >
+                          <Eye className="mr-2 h-4 w-4" />
+                          View
+                        </Button>
+
+                        <MessageCandidateDialog application={application} />
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
                   <TableCell
-                    colSpan={5}
+                    colSpan={6}
                     className="py-8 text-center text-muted-foreground"
                   >
                     No applications found.
@@ -248,7 +382,6 @@ const EmployerRecentApplications = () => {
         )}
       </div>
 
-      {/* Applicant Details Dialog */}
       <Dialog open={openDetails} onOpenChange={setOpenDetails}>
         <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
@@ -260,11 +393,26 @@ const EmployerRecentApplications = () => {
 
           {selectedApplication && (
             <div className="space-y-6">
-              {/* Candidate Summary */}
               <div className="rounded-xl border bg-slate-50 p-5">
-                <h3 className="text-lg font-semibold text-slate-900">
-                  {selectedApplication.candidate_name}
-                </h3>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-slate-900">
+                      {selectedApplication.candidate_name}
+                    </h3>
+
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Applied {selectedApplication.applied}
+                    </p>
+                  </div>
+
+                  <span
+                    className={`w-fit rounded-full px-3 py-1 text-xs font-medium ${getStatusStyle(
+                      selectedApplication.status,
+                    )}`}
+                  >
+                    {selectedApplication.status_display}
+                  </span>
+                </div>
 
                 <div className="mt-4 grid gap-3 text-sm text-slate-600 sm:grid-cols-2">
                   <div className="flex items-center gap-2">
@@ -282,99 +430,90 @@ const EmployerRecentApplications = () => {
                     <span>{selectedApplication.university}</span>
                   </div>
 
-                  <div>
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-medium ${getStatusStyle(
-                        selectedApplication.status,
-                      )}`}
-                    >
-                      {selectedApplication.status_display}
-                    </span>
+                  <div className="text-sm text-slate-600">
+                    <span className="font-medium">Programme:</span>{" "}
+                    {selectedApplication.programme || "Not provided"}
                   </div>
-                </div>
-              </div>
 
-              {/* Cover Letter */}
-              <div>
-                <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-900">
-                  <FileText className="h-4 w-4 text-yellow-600" />
-                  Cover Letter
-                </h3>
+                  {selectedApplication.phone && (
+                    <div className="text-sm text-slate-600">
+                      <span className="font-medium">Phone:</span>{" "}
+                      {selectedApplication.phone}
+                    </div>
+                  )}
 
-                <div className="max-h-60 overflow-y-auto rounded-xl border bg-white p-4 text-sm leading-7 text-slate-600">
-                  {selectedApplication.cover_letter ? (
-                    <p className="whitespace-pre-line">
-                      {selectedApplication.cover_letter}
-                    </p>
-                  ) : (
-                    <p className="text-muted-foreground">
-                      No cover letter submitted.
-                    </p>
+                  {selectedApplication.portfolio && (
+                    <div className="text-sm text-slate-600">
+                      <span className="font-medium">Portfolio:</span>{" "}
+                      <a
+                        href={selectedApplication.portfolio}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-yellow-700 hover:underline"
+                      >
+                        View Portfolio
+                      </a>
+                    </div>
                   )}
                 </div>
+
+                <div className="mt-5">
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Update Application Status
+                  </label>
+
+                  <select
+                    value={selectedApplication.status}
+                    disabled={updatingStatusId === selectedApplication.id}
+                    onChange={(e) =>
+                      handleStatusUpdate(selectedApplication, e.target.value)
+                    }
+                    className="h-10 w-full rounded-md border px-3 text-sm outline-none focus:border-black disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {statusOptions.map((status) => (
+                      <option key={status.value} value={status.value}>
+                        {status.label}
+                      </option>
+                    ))}
+                  </select>
+
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Updating the status will notify the student through the
+                    platform and email if your backend email service is enabled.
+                  </p>
+                </div>
               </div>
 
-              {/* Documents */}
               <div>
                 <h3 className="mb-3 text-base font-semibold text-slate-900">
                   Submitted Documents
                 </h3>
 
                 <div className="grid gap-3 sm:grid-cols-2">
-                  {selectedApplication.cv ? (
-                    <a
-                      href={selectedApplication.cv}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-center justify-between rounded-xl border bg-white p-4 text-sm transition hover:bg-slate-50"
-                    >
-                      <div className="flex items-center gap-3">
-                        <FileText className="h-5 w-5 text-yellow-600" />
-                        <div>
-                          <p className="font-medium text-slate-900">
-                            CV / Resume
-                          </p>
-                          <p className="text-xs text-slate-500">
-                            {getFileName(selectedApplication.cv)}
-                          </p>
-                        </div>
-                      </div>
+                  <DocumentCard
+                    label="CV / Resume"
+                    fileUrl={selectedApplication.cv}
+                  />
 
-                      <Download className="h-4 w-4 text-slate-500" />
-                    </a>
-                  ) : (
-                    <div className="rounded-xl border bg-slate-50 p-4 text-sm text-muted-foreground">
-                      No CV uploaded.
-                    </div>
-                  )}
+                  <DocumentCard
+                    label="Cover Letter"
+                    fileUrl={selectedApplication.cover_letter}
+                  />
 
-                  {selectedApplication.transcript ? (
-                    <a
-                      href={selectedApplication.transcript}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-center justify-between rounded-xl border bg-white p-4 text-sm transition hover:bg-slate-50"
-                    >
-                      <div className="flex items-center gap-3">
-                        <FileText className="h-5 w-5 text-yellow-600" />
-                        <div>
-                          <p className="font-medium text-slate-900">
-                            Transcript
-                          </p>
-                          <p className="text-xs text-slate-500">
-                            {getFileName(selectedApplication.transcript)}
-                          </p>
-                        </div>
-                      </div>
-
-                      <Download className="h-4 w-4 text-slate-500" />
-                    </a>
-                  ) : (
-                    <div className="rounded-xl border bg-slate-50 p-4 text-sm text-muted-foreground">
-                      No transcript uploaded.
-                    </div>
-                  )}
+                  <DocumentCard
+                    label="Transcript"
+                    fileUrl={selectedApplication.transcript}
+                  />
                 </div>
+              </div>
+
+              <div className="flex flex-col gap-3 border-t pt-5 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Send a direct message to this applicant about their
+                  application.
+                </p>
+
+                <MessageCandidateDialog application={selectedApplication} />
               </div>
 
               <div className="flex justify-end">
