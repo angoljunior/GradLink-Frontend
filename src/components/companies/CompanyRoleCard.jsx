@@ -59,13 +59,13 @@ const CompanyRoleCard = ({ job }) => {
             </div>
 
             <div>
-              <Link to={`/job/${job.id}`}>
+              <Link to={`/jobs/${job.id}`}>
                 <h3 className="text-xl font-semibold text-slate-950 transition hover:text-yellow-700">
                   {job.title}
                 </h3>
               </Link>
 
-              <Link to={`/company/${companyId}`}>
+              <Link to={`/companies/${companyId}`}>
                 <p className="mt-2 text-slate-500 hover:text-yellow-700 hover:underline">
                   {companyName}
                 </p>

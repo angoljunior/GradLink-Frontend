@@ -1,3 +1,4 @@
+import { articleSlug } from "./articles";
 import { Calendar, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -6,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 const BlogCard = ({ post }) => {
   return (
 
-    <Link to={`/career-advice/${post.id}`}>
+    <Link to={`/career-advice/${articleSlug(post)}`}>
         <Card className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition-all duration-300">
       {/* Image placeholder */}
       <div className="h-48 bg-gradient-to-br from-yellow-100 via-slate-100 to-emerald-100" />

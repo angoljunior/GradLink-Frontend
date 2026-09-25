@@ -16,7 +16,7 @@ const CompanyCard = ({ company }) => {
       : company.description || "No company description available.";
 
   return (
-    <Link to={`/company/${company.id}`} className="block">
+    <Link to={`/companies/${company.id}`} className="block">
       <Card className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
         {/* Top background */}
         <div className="relative h-24 bg-slate-100">

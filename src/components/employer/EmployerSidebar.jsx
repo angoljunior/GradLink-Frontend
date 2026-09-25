@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import {
   LayoutDashboard,
   BriefcaseBusiness,
@@ -9,23 +10,28 @@ import {
 const sidebarLinks = [
   {
     label: "Dashboard",
+    path: "/employer/dashboard",
     icon: LayoutDashboard,
     active: true,
   },
   {
     label: "Manage Jobs",
+    path: "/employer/jobs",
     icon: BriefcaseBusiness,
   },
   {
     label: "Applicants",
+    path: "/employer/applicants",
     icon: Users,
   },
   {
     label: "Messages",
+    path: "/employer/messages",
     icon: MessageSquare,
   },
   {
     label: "Company Profile",
+    path: "/employer/company-profile",
     icon: Building2,
   },
 ];
@@ -44,7 +50,7 @@ const EmployerSidebar = () => {
           const Icon = item.icon;
 
           return (
-            <button
+            <Link to={item.path}
               key={item.label}
               className={`w-full flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition ${
                 item.active
@@ -54,7 +60,7 @@ const EmployerSidebar = () => {
             >
               <Icon className="h-4 w-4" />
               {item.label}
-            </button>
+            </Link>
           );
         })}
       </nav>

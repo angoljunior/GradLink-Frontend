@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 import {
@@ -30,15 +30,37 @@ import {
 
 import { Field, FieldGroup } from "@/components/ui/field";
 
+import { parseResume } from "@/services/resumeService";
 import api from "@/api/axios";
 
 const JobDetailsHeader = ({ job }) => {
+  const navigate = useNavigate();
+  const [parsing, setParsing] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const handleDialogChange = (open) => {
+    if (parsing || applying) return;
+    if (open && !localStorage.getItem("access")) {
+      toast.info("Please log in to apply.");
+      navigate("/login");
+      return;
+    }
+    if (open && localStorage.getItem("role") !== "student") {
+      toast.error("Only students can apply.");
+      return;
+    }
+    setOpenApplyDialog(open);
+  };
   const [copied, setCopied] = useState(false);
   const [savingJob, setSavingJob] = useState(false);
   const [applying, setApplying] = useState(false);
   const [openApplyDialog, setOpenApplyDialog] = useState(false);
 
   const [applicationData, setApplicationData] = useState({
+    education: "",
+    skills: "",
+    projects: "",
+    workExperience: "",
+    cert: "",
     fullName: "",
     email: "",
     phone: "",
@@ -148,6 +170,17 @@ const JobDetailsHeader = ({ job }) => {
     const { name, value, files } = e.target;
 
     if (files) {
+      if (
+        name === "cv" &&
+        files[0] &&
+        (!/\.(pdf|docx|png|jpe?g)$/i.test(files[0].name) ||
+          files[0].size > 10 * 1024 * 1024)
+      ) {
+        e.target.value = "";
+        setApplicationData((previous) => ({ ...previous, cv: null }));
+        toast.error("Please select a PDF, DOCX, PNG, or JPG up to 10 MB.");
+        return;
+      }
       setApplicationData((prev) => ({
         ...prev,
         [name]: files[0],
@@ -161,15 +194,40 @@ const JobDetailsHeader = ({ job }) => {
     }));
   };
 
-  const handleApplySubmit = async (e) => {
-    e.preventDefault();
-
-    if (!applicationData.coverLetter) {
-      toast.warning("Cover letter required", {
-        description: "Please upload your cover letter before submitting.",
-      });
+  const handleParse = async () => {
+    if (!applicationData.cv) {
+      toast.error("Please select a PDF, DOCX, PNG, or JPG CV.");
       return;
     }
+    setParsing(true);
+    try {
+      const { data } = await parseResume(applicationData.cv);
+      setApplicationData((previous) => ({
+        ...previous,
+        fullName: data.full_name || previous.fullName,
+        email: data.email || previous.email,
+        phone: data.phone || previous.phone,
+        education: data.education_text || previous.education,
+        skills: data.skills?.join(", ") || previous.skills,
+        workExperience: data.experience_text || previous.workExperience,
+        projects: data.projects_text || previous.projects,
+        cert: data.certifications_text || previous.cert,
+      }));
+      toast.success(
+        "CV parsed. Review and edit your details before submitting.",
+      );
+    } catch (error) {
+      toast.error(
+        error.response?.data?.detail ||
+          "Unable to parse your CV. Please try again.",
+      );
+    } finally {
+      setParsing(false);
+    }
+  };
+
+  const handleApplySubmit = async (e) => {
+    e.preventDefault();
 
     if (!applicationData.cv) {
       toast.warning("CV required", {
@@ -181,7 +239,15 @@ const JobDetailsHeader = ({ job }) => {
     const formData = new FormData();
 
     formData.append("job", job.id);
-    formData.append("cover_letter", applicationData.coverLetter);
+    if (applicationData.coverLetter)
+      formData.append("cover_letter", applicationData.coverLetter);
+    for (const [field, key] of Object.entries({
+      education: "education",
+      skills: "skills",
+      projects: "projects",
+    })) {
+      formData.append(field, applicationData[key] || "");
+    }
     formData.append("cv", applicationData.cv);
 
     if (applicationData.transcript) {
@@ -200,14 +266,22 @@ const JobDetailsHeader = ({ job }) => {
       formData.append("portfolio", applicationData.portfolio);
     }
 
+    if (applicationData.fullName) {
+      formData.append("full_name", applicationData.fullName);
+    }
+
+    if (applicationData.workExperience) {
+      formData.append("work_experience", applicationData.workExperience);
+    }
+
+    if (applicationData.cert) {
+      formData.append("certifications", applicationData.cert);
+    }
+
     try {
       setApplying(true);
 
-      const response = await api.post("/applications/", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      const response = await api.post(`jobs/${job.id}/apply/`, formData);
 
       toast.success("Application submitted", {
         description:
@@ -216,6 +290,11 @@ const JobDetailsHeader = ({ job }) => {
       });
 
       setApplicationData({
+        education: "",
+        skills: "",
+        projects: "",
+        workExperience: "",
+        cert: "",
         fullName: "",
         email: "",
         phone: "",
@@ -225,6 +304,7 @@ const JobDetailsHeader = ({ job }) => {
         transcript: null,
       });
 
+      setSubmitted(true);
       setOpenApplyDialog(false);
     } catch (error) {
       console.log("Application failed:", error.response?.data || error);
@@ -240,6 +320,9 @@ const JobDetailsHeader = ({ job }) => {
         data?.email?.[0] ||
         data?.phone?.[0] ||
         data?.portfolio?.[0] ||
+        data?.full_name?.[0] ||
+        data?.work_experience?.[0] ||
+        data?.certifications?.[0] ||
         "Failed to submit application. You may have already applied for this job.";
 
       toast.error("Application failed", {
@@ -257,7 +340,7 @@ const JobDetailsHeader = ({ job }) => {
       <div className="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-8 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-start gap-6">
           <Link
-            to={companyId ? `/company/${companyId}` : "#"}
+            to={companyId ? `/companies/${companyId}` : "/companies"}
             className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white shadow-sm transition hover:border-yellow-500"
           >
             {companyLogo ? (
@@ -278,7 +361,7 @@ const JobDetailsHeader = ({ job }) => {
 
             <div className="mt-4 flex flex-wrap items-center gap-4 text-sm md:text-base">
               <Link
-                to={companyId ? `/company/${companyId}` : "#"}
+                to={companyId ? `/companies/${companyId}` : "/companies"}
                 className="flex items-center gap-1.5 font-medium text-yellow-600 hover:underline"
               >
                 <Building2 className="h-4 w-4" />
@@ -374,10 +457,13 @@ const JobDetailsHeader = ({ job }) => {
           </Dialog>
 
           {/* Apply Dialog */}
-          <Dialog open={openApplyDialog} onOpenChange={setOpenApplyDialog}>
+          <Dialog open={openApplyDialog} onOpenChange={handleDialogChange}>
             <DialogTrigger asChild>
-              <Button className="bg-yellow-500 text-black hover:bg-yellow-600">
-                Apply Now
+              <Button
+                disabled={submitted}
+                className="bg-yellow-500 text-black hover:bg-yellow-600"
+              >
+                {submitted ? "Application Submitted" : "Apply Now"}
               </Button>
             </DialogTrigger>
 
@@ -392,108 +478,171 @@ const JobDetailsHeader = ({ job }) => {
                   </DialogDescription>
                 </DialogHeader>
 
-                <FieldGroup className="mt-5 space-y-4">
-                  <Field>
-                    <Label htmlFor="fullName">Full Name</Label>
-                    <Input
-                      id="fullName"
-                      name="fullName"
-                      type="text"
-                      placeholder="Enter your full name"
-                      value={applicationData.fullName}
-                      onChange={handleApplicationChange}
-                    />
-                  </Field>
+                <fieldset disabled={parsing || applying}>
+                  <FieldGroup className="mt-5 space-y-4">
+                    <Field>
+                      <Label htmlFor="cv">CV / Resume</Label>
+                      <Input
+                        id="cv"
+                        name="cv"
+                        type="file"
+                        accept=".pdf,.docx,.png,.jpg,.jpeg"
+                        required
+                        onChange={handleApplicationChange}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        PDF, DOCX, PNG, or JPG, up to 10 MB. Review all extracted details.
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Upload your CV as a PDF. DOCX is supported, but PDF
+                        gives better formatting and parsing accuracy.
+                      </p>
+                      <Button
+                        type="button"
+                        disabled={parsing || !applicationData.cv}
+                        onClick={handleParse}
+                        className="bg-yellow-500 text-black hover:bg-yellow-600"
+                      >
+                        {parsing ? "Parsing CV..." : "Upload and Parse CV"}
+                      </Button>
+                    </Field>
+                    {[
+                      ["education", "Education"],
+                      ["skills", "Skills"],
+                      ["projects", "Projects"],
+                    ].map(([name, label]) => (
+                      <Field key={name}>
+                        <Label htmlFor={name}>{label}</Label>
+                        <textarea
+                          id={name}
+                          name={name}
+                          value={applicationData[name]}
+                          onChange={handleApplicationChange}
+                          rows={3}
+                          className="w-full rounded-md border p-3 text-sm"
+                        />
+                      </Field>
+                    ))}
+                    <Field>
+                      <Label htmlFor="fullName">Full Name</Label>
+                      <Input
+                        id="fullName"
+                        name="fullName"
+                        type="text"
+                        placeholder="Enter your full name"
+                        value={applicationData.fullName}
+                        onChange={handleApplicationChange}
+                      />
+                    </Field>
 
-                  <Field>
-                    <Label htmlFor="email">Email Address</Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      placeholder="example@email.com"
-                      value={applicationData.email}
-                      onChange={handleApplicationChange}
-                    />
-                  </Field>
+                    <Field>
+                      <Label htmlFor="email">Email Address</Label>
+                      <Input
+                        id="email"
+                        name="email"
+                        type="email"
+                        placeholder="example@email.com"
+                        value={applicationData.email}
+                        onChange={handleApplicationChange}
+                      />
+                    </Field>
 
-                  <Field>
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      placeholder="+233 24 000 0000"
-                      value={applicationData.phone}
-                      onChange={handleApplicationChange}
-                    />
-                  </Field>
+                    <Field>
+                      <Label htmlFor="phone">Phone Number</Label>
+                      <Input
+                        id="phone"
+                        name="phone"
+                        type="tel"
+                        placeholder="+233 24 000 0000"
+                        value={applicationData.phone}
+                        onChange={handleApplicationChange}
+                      />
+                    </Field>
+                    <Field>
+                      <Label htmlFor="workExperience">Work Experience</Label>
+                      <textarea
+                        rows={4}
+                        className="w-full rounded-md border p-3 text-sm"
+                        id="workExperience"
+                        name="workExperience"
+                        placeholder="AngloGold Ashanti, 2020-2023 , MTN Ghana, 2018-2020"
+                        value={applicationData.workExperience}
+                        onChange={handleApplicationChange}
+                      />
+                    </Field>
+                    <Field>
+                      <Label htmlFor="cert">Certifications</Label>
+                      <textarea
+                        rows={3}
+                        className="w-full rounded-md border p-3 text-sm"
+                        id="cert"
+                        name="cert"
+                        placeholder="Project Management-Professional Pathfinders Club, 2020; Certification 2, 2021"
+                        value={applicationData.cert}
+                        onChange={handleApplicationChange}
+                      />
+                    </Field>
 
-                  <Field>
-                    <Label htmlFor="portfolio">Portfolio / LinkedIn Link</Label>
-                    <Input
-                      id="portfolio"
-                      name="portfolio"
-                      type="url"
-                      placeholder="https://linkedin.com/in/yourname"
-                      value={applicationData.portfolio}
-                      onChange={handleApplicationChange}
-                    />
-                  </Field>
+                    <Field>
+                      <Label htmlFor="portfolio">
+                        Portfolio / LinkedIn Link
+                      </Label>
+                      <Input
+                        id="portfolio"
+                        name="portfolio"
+                        type="url"
+                        placeholder="https://linkedin.com/in/yourname"
+                        value={applicationData.portfolio}
+                        onChange={handleApplicationChange}
+                      />
+                    </Field>
 
-                  <Field>
-                    <Label htmlFor="cv">CV / Resume</Label>
-                    <Input
-                      id="cv"
-                      name="cv"
-                      type="file"
-                      accept=".pdf,.doc,.docx"
-                      onChange={handleApplicationChange}
-                      required
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Accepted formats: PDF, DOC, DOCX
-                    </p>
-                  </Field>
+                    <Field>
+                      <Label htmlFor="transcript">Transcript</Label>
+                      <Input
+                        id="transcript"
+                        name="transcript"
+                        type="file"
+                        accept=".pdf,.doc,.docx"
+                        onChange={handleApplicationChange}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Optional, but recommended.
+                      </p>
+                    </Field>
 
-                  <Field>
-                    <Label htmlFor="transcript">Transcript</Label>
-                    <Input
-                      id="transcript"
-                      name="transcript"
-                      type="file"
-                      accept=".pdf,.doc,.docx"
-                      onChange={handleApplicationChange}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Optional, but recommended.
-                    </p>
-                  </Field>
-
-                  <Field>
-                    <Label htmlFor="coverLetter">Cover Letter</Label>
-                    <Input
-                      id="coverLetter"
-                      name="coverLetter"
-                      type="file"
-                      accept=".pdf,.doc,.docx"
-                      onChange={handleApplicationChange}
-                      required
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Accepted formats: PDF, DOC, DOCX
-                    </p>
-                  </Field>
-                </FieldGroup>
+                    <Field>
+                      <Label htmlFor="coverLetter">Cover Letter</Label>
+                      <Input
+                        id="coverLetter"
+                        name="coverLetter"
+                        type="file"
+                        accept=".pdf,.doc,.docx"
+                        onChange={handleApplicationChange}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Accepted formats: PDF, DOC, DOCX
+                      </p>
+                    </Field>
+                  </FieldGroup>
+                </fieldset>
 
                 <DialogFooter className="mt-6">
                   <DialogClose asChild>
-                    <Button type="button" variant="outline">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={parsing || applying}
+                    >
                       Cancel
                     </Button>
                   </DialogClose>
 
-                  <Button type="submit" disabled={applying}>
+                  <Button
+                    type="submit"
+                    disabled={applying || parsing}
+                    className="bg-yellow-500 text-black hover:bg-yellow-600"
+                  >
                     {applying ? (
                       <span className="flex items-center gap-2">
                         <Loader2 className="h-4 w-4 animate-spin" />

@@ -178,7 +178,7 @@ const SavedJobs = () => {
               >
                 <div className="flex items-start gap-4">
                   <Link
-                    to={`/company/${item.company_id}`}
+                    to={`/companies/${item.company_id}`}
                     className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border bg-slate-50"
                   >
                     {item.company_logo ? (
@@ -193,13 +193,13 @@ const SavedJobs = () => {
                   </Link>
 
                   <div className="min-w-0 flex-1">
-                    <Link to={`/job/${item.job_id}`}>
+                    <Link to={`/jobs/${item.job_id}`}>
                       <h2 className="line-clamp-2 text-base font-semibold text-slate-950 hover:text-yellow-700 hover:underline">
                         {item.job_title}
                       </h2>
                     </Link>
 
-                    <Link to={`/company/${item.company_id}`}>
+                    <Link to={`/companies/${item.company_id}`}>
                       <p className="mt-1 text-sm text-slate-500 hover:text-yellow-700 hover:underline">
                         {item.company_name}
                       </p>
@@ -252,7 +252,7 @@ const SavedJobs = () => {
 
                 <div className="mt-5 flex items-center justify-between gap-3">
                   <Button variant="outline" size="sm" asChild>
-                    <Link to={`/job/${item.job_id}`}>
+                    <Link to={`/jobs/${item.job_id}`}>
                       <Eye className="mr-2 h-4 w-4" />
                       View Job
                     </Link>

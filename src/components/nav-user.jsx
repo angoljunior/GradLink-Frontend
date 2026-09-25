@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -23,6 +24,8 @@ import {
 } from "lucide-react";
 
 export function NavUser({ user }) {
+  const navigate = useNavigate();
+  const role = localStorage.getItem("role") === "employer" ? "employer" : "student";
   const { isMobile } = useSidebar();
 
   // handle exit dashboard take user to homepage
@@ -74,15 +77,15 @@ export function NavUser({ user }) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate(role === "employer" ? "/employer/company-profile" : "/student/profile")}>
                 <CircleUserRoundIcon />
                 Account
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/pricing")}>
                 <CreditCardIcon />
                 Billing
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate(`/${role}/notifications`)}>
                 <BellIcon />
                 Notifications
               </DropdownMenuItem>

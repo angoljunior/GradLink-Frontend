@@ -77,7 +77,7 @@ const SimilarOpportunities = ({ currentJob }) => {
               return (
                 <Link
                   key={job.id}
-                  to={`/job/${job.id}`}
+                  to={`/jobs/${job.id}`}
                   className="block rounded-xl border border-slate-200 bg-white p-4 transition hover:bg-slate-50"
                 >
                   <h3 className="font-semibold text-slate-950">{job.title}</h3>

@@ -79,7 +79,7 @@ const CompanyInfoCard = ({ company }) => {
           asChild
           className="mt-6 w-full bg-yellow-500 text-black hover:bg-yellow-600"
         >
-          <Link to={`/company/${company.id}`}>View Company Profile</Link>
+          <Link to={`/companies/${company.id}`}>View Company Profile</Link>
         </Button>
       </CardContent>
     </Card>

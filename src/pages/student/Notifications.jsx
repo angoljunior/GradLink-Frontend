@@ -452,7 +452,7 @@ const Notifications = () => {
                     asChild
                     className="bg-yellow-500 text-black hover:bg-yellow-600"
                   >
-                    <Link to="/student-dashboard/applications">
+                    <Link to="/student/applications">
                       View Application
                     </Link>
                   </Button>

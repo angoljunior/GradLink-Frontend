@@ -25,9 +25,9 @@ const GoogleAuthButton = ({ role = "student" }) => {
       });
 
       if (response.data.role === "employer") {
-        navigate("/employer-dashboard");
+        navigate("/employer/dashboard");
       } else {
-        navigate("/student-dashboard");
+        navigate("/student/dashboard");
       }
     } catch (error) {
       console.log("Google auth error:", error.response?.data || error);

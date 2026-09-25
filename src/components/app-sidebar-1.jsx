@@ -1,4 +1,3 @@
-import * as React from "react";
 
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
@@ -33,29 +32,32 @@ const data = {
   },
 
   navMain: [
+    { title: "Post a Job", url: "/employer/post-job", icon: ListIcon },
+    { title: "Messages", url: "/employer/messages", icon: UsersIcon },
+    { title: "Company Profile", url: "/employer/company-profile", icon: UsersIcon },
     {
       title: "Dashboard",
-      url: "/employer-dashboard",
+      url: "/employer/dashboard",
       icon: LayoutDashboardIcon,
     },
     {
       title: "Manage Jobs",
-      url: "/employer-dashboard/manage-jobs",
+      url: "/employer/jobs",
       icon: ListIcon,
     },
     {
       title: "Applicants",
-      url: "/employer-dashboard/applicants",
+      url: "/employer/applicants",
       icon: FileTextIcon,
     },
     {
       title: "Notifications",
-      url: "/employer-dashboard/notifications",
+      url: "/employer/notifications",
       icon: BellIcon,
     },
     {
       title: "Settings",
-      url: "/employer-dashboard/settings",
+      url: "/employer/settings",
       icon: Settings2Icon,
     },
   ],
@@ -71,7 +73,7 @@ export function AppSidebar({ ...props }) {
               asChild
               className="data-[slot=sidebar-menu-button]:p-1.5!"
             >
-              <a href="/student-dashboard">
+              <a href="/employer/dashboard">
                 <CommandIcon className="size-5!" />
                 <span className="text-base font-semibold">
                   {username}'s Dashboard

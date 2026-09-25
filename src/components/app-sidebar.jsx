@@ -1,4 +1,3 @@
-import * as React from "react";
 
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
@@ -35,44 +34,45 @@ const data = {
   },
 
   navMain: [
+    { title: "Profile", url: "/student/profile", icon: UsersIcon },
     {
       title: "Dashboard",
-      url: "/student-dashboard",
+      url: "/student/dashboard",
       icon: LayoutDashboardIcon,
     },
     {
       title: "My Applications",
-      url: "/student-dashboard/applications",
+      url: "/student/applications",
       icon: ListIcon,
     },
     {
       title: "CV Builder",
-      url: "/student-dashboard/cv-builder",
+      url: "/student/cv-builder",
       icon: FileTextIcon,
     },
     {
       title: "Documents",
-      url: "/student-dashboard/documents",
+      url: "/student/documents",
       icon: FileTextIcon,
     },
     {
       title: "Saved Jobs",
-      url: "/student-dashboard/saved-jobs",
+      url: "/student/saved-jobs",
       icon: BookmarkIcon,
     },
     {
       title: "Messages",
-      url: "/student-dashboard/messages",
+      url: "/student/messages",
       icon: MailIcon,
     },
     {
       title: "Notifications",
-      url: "/student-dashboard/notifications",
+      url: "/student/notifications",
       icon: BellIcon,
     },
     {
       title: "Settings",
-      url: "/student-dashboard/settings",
+      url: "/student/settings",
       icon: Settings2Icon,
     },
   ],
@@ -88,7 +88,7 @@ export function AppSidebar({ ...props }) {
               asChild
               className="data-[slot=sidebar-menu-button]:p-1.5!"
             >
-              <a href="/student-dashboard">
+              <a href="/student/dashboard">
                 <CommandIcon className="size-5!" />
                 <span className="text-base font-semibold">
                   {username}'s Dashboard

@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 export function SignupForm({ className, ...props }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState("student");
+  const [role, setRole] = useState(new URLSearchParams(window.location.search).get("role") === "employer" ? "employer" : "student");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 

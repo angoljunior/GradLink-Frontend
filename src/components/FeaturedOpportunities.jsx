@@ -194,7 +194,7 @@ const FeaturedOpportunities = () => {
                     <div className="flex items-start gap-4">
                       {/* Company Icon */}
                       <Link
-                        to={`/company/${companyId}`}
+                        to={`/companies/${companyId}`}
                         className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border bg-white transition hover:border-yellow-500"
                       >
                         {job.company?.logo ? (
@@ -218,7 +218,7 @@ const FeaturedOpportunities = () => {
                               </h3>
                             </Link>
 
-                            <Link to={`/company/${companyId}`}>
+                            <Link to={`/companies/${companyId}`}>
                               <p className="mt-1 text-sm text-slate-500 transition hover:text-yellow-700 hover:underline">
                                 {companyName}
                               </p>

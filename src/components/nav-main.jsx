@@ -21,7 +21,7 @@ export function NavMain({ items }) {
                 <SidebarMenuButton asChild>
                   <NavLink
                     to={item.url}
-                    end={item.url === "/student-dashboard"}
+                    end={item.url === "/student/dashboard"}
                     className={({ isActive }) =>
                       isActive ? "bg-black text-white" : "text-muted-foreground"
                     }

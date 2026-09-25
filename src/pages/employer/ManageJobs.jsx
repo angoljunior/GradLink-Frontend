@@ -39,14 +39,14 @@ const emptyForm = {
   is_active: true,
 };
 
-const ManageJobs = () => {
+const ManageJobs = ({ initiallyOpen = false }) => {
   const [jobs, setJobs] = useState([]);
   const [categories, setCategories] = useState([]);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
 
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(initiallyOpen);
   const [editingJobId, setEditingJobId] = useState(null);
 
   const [formData, setFormData] = useState(emptyForm);
@@ -631,7 +631,7 @@ const ManageJobs = () => {
                   <TableRow key={job.id}>
                     <TableCell className="font-medium">
                       <Link
-                        to={`/job/${job.id}`}
+                        to={`/jobs/${job.id}`}
                         className="hover:text-yellow-700 hover:underline"
                       >
                         {job.title}
@@ -665,7 +665,7 @@ const ManageJobs = () => {
                     <TableCell>
                       <div className="flex justify-end gap-2">
                         <Link
-                          to={`/employer-dashboard/applicants?job=${job.id}`}
+                          to={`/employer/applicants?job=${job.id}`}
                           title="View applicants"
                           className="rounded-md border p-2 hover:bg-gray-100"
                         >

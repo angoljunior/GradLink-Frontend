@@ -16,7 +16,7 @@ const footerLinks = [
     links: [
       { label: "Browse Jobs", path: "/jobs" },
       { label: "Browse Companies", path: "/companies" },
-      { label: "CV Builder", path: "/cv-builder" },
+      { label: "CV Builder", path: "/student/cv-builder" },
       { label: "Practice Tests", path: "/tests" },
       { label: "Career Advice", path: "/career-advice" },
     ],
@@ -25,7 +25,7 @@ const footerLinks = [
     title: "Employers",
     links: [
       { label: "Pricing & Plans", path: "/pricing" },
-      { label: "Post a Job", path: "/post-job" },
+      { label: "Post a Job", path: "/employer/post-job" },
       { label: "Employer Dashboard", path: "/employer/dashboard" },
     ],
   },
@@ -90,7 +90,7 @@ const Footer = () => {
           </div>
 
           {/* Footer Links */}
-          {footerLinks.map((section) => (
+          {footerLinks.filter((section) => !(localStorage.getItem("role") === "student" && section.title === "Employers") && !(localStorage.getItem("role") === "employer" && section.title === "Candidates")).map((section) => (
             <div key={section.title}>
               <h3 className="text-sm font-semibold text-white">
                 {section.title}

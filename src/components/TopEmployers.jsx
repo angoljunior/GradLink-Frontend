@@ -208,7 +208,7 @@ const TopEmployers = ({ jobSearch = "", locationSearch = "" }) => {
                 key={company.id}
                 className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
               >
-                <Link to={`/company/${company.id}`} className="block">
+                <Link to={`/companies/${company.id}`} className="block">
                   <div className="relative h-20 bg-slate-100">
                     <div className="absolute bottom-[-26px] left-5 flex h-14 w-14 items-center justify-center rounded-lg border bg-white shadow-sm">
                       {company.logo ? (
@@ -285,7 +285,7 @@ const TopEmployers = ({ jobSearch = "", locationSearch = "" }) => {
                       {company.jobs.slice(0, 2).map((job) => (
                         <Link
                           key={job.id}
-                          to={`/job/${job.id}`}
+                          to={`/jobs/${job.id}`}
                           className="block rounded-md border bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-yellow-400 hover:bg-yellow-50 hover:text-yellow-700"
                         >
                           {job.title}

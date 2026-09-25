@@ -36,7 +36,7 @@ const Navbar = () => {
   const isLoggedIn = Boolean(accessToken);
 
   const dashboardPath =
-    userRole === "employer" ? "/employer-dashboard" : "/student-dashboard";
+    userRole === "employer" ? "/employer/dashboard" : "/student/dashboard";
 
   const dashboardLabel =
     userRole === "employer" ? "Employer Dashboard" : "Student Dashboard";
@@ -80,7 +80,7 @@ const Navbar = () => {
             About
           </Link>
 
-          <Link to="/blog" className="transition hover:text-yellow-600">
+          <Link to="/career-advice" className="transition hover:text-yellow-600">
             Career Advice
           </Link>
         </nav>
@@ -135,7 +135,7 @@ const Navbar = () => {
                 variant="outline"
                 className="hidden shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-white sm:inline-flex"
               >
-                <Link to="/employer-register">Employers</Link>
+                <Link to="/auth?role=employer">Employers</Link>
               </Button>
             </>
           ) : (
@@ -156,7 +156,7 @@ const Navbar = () => {
 
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuGroup>
-                  <DropdownMenuItem onClick={() => navigate("/account")}>
+                  <DropdownMenuItem onClick={() => navigate(userRole === "employer" ? "/employer/company-profile" : "/student/profile")}>
                     <BadgeCheckIcon className="mr-2 h-4 w-4" />
                     Account
                   </DropdownMenuItem>
@@ -166,7 +166,7 @@ const Navbar = () => {
                     {dashboardLabel}
                   </DropdownMenuItem>
 
-                  <DropdownMenuItem onClick={() => navigate("/notifications")}>
+                  <DropdownMenuItem onClick={() => navigate(userRole === "employer" ? "/employer/notifications" : "/student/notifications")}>
                     <BellIcon className="mr-2 h-4 w-4" />
                     Notifications
                   </DropdownMenuItem>

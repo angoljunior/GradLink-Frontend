@@ -11,7 +11,7 @@ const JobListCard = ({ job }) => {
         <div className="flex items-start gap-5">
           {/* Company icon */}
           <Link
-            to={`/company/${job.companyId}`}
+            to={`/companies/${job.companyId}`}
             className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border bg-white transition hover:border-yellow-500"
           >
             <Building2 className="h-5 w-5 text-slate-500" />
@@ -21,7 +21,7 @@ const JobListCard = ({ job }) => {
           <div className="flex-1">
             <div className="flex justify-between gap-4">
               <div>
-                <Link to={`/job/${job.id}`}>
+                <Link to={`/jobs/${job.id}`}>
                   <h3 className="truncate text-base font-semibold text-slate-900 transition hover:text-yellow-700">
                     {job.title}
                   </h3>

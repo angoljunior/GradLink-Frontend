@@ -507,6 +507,13 @@ const EmployerRecentApplications = () => {
                 </div>
               </div>
 
+              <section className="space-y-4 rounded-xl border p-4">
+                <h3 className="font-semibold">Application details</h3>
+                {[["education", "Education"], ["skills", "Skills"], ["work_experience", "Work Experience"], ["projects", "Projects"], ["certifications", "Certifications"]].map(([field, label]) => (
+                  <div key={field}><h4 className="text-sm font-medium">{label}</h4><p className="whitespace-pre-wrap text-sm text-slate-600">{selectedApplication[field] || "Not provided"}</p></div>
+                ))}
+              </section>
+
               <div className="flex flex-col gap-3 border-t pt-5 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm text-muted-foreground">
                   Send a direct message to this applicant about their

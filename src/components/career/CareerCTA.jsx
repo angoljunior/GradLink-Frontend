@@ -1,10 +1,11 @@
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 const CareerCTA = () => {
   return (
     <section className="relative overflow-hidden bg-yellow-500">
       {/* Background image overlay effect */}
-      <div className="absolute inset-0 bg-[url('/career-bg.jpg')] bg-cover bg-center opacity-15" />
+      <div className="absolute inset-0 bg-gradient-to-r from-yellow-200 to-emerald-200 bg-cover bg-center opacity-15" />
 
       {/* Yellow overlay */}
       <div className="absolute inset-0 bg-yellow-500/90" />
@@ -20,16 +21,17 @@ const CareerCTA = () => {
         </p>
 
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Button className="h-12 px-8 bg-slate-950 hover:bg-slate-900 text-white rounded-lg">
-            Create Student Profile
-          </Button>
+          {localStorage.getItem("role") !== "employer" && <Button asChild className="h-12 px-8 bg-slate-950 hover:bg-slate-900 text-white rounded-lg">
+            <Link to={localStorage.getItem("access") ? "/student/profile" : "/auth?role=student"}>Create Student Profile</Link>
+          </Button>}
 
-          <Button
+          {localStorage.getItem("role") !== "student" && <Button
+            asChild
             variant="outline"
             className="h-12 px-8 border-slate-900/40 bg-transparent hover:bg-yellow-400 text-slate-950 rounded-lg"
           >
-            I&apos;m an Employer
-          </Button>
+            <Link to={localStorage.getItem("access") ? "/employer/dashboard" : "/auth?role=employer"}>I&apos;m an Employer</Link>
+          </Button>}
         </div>
       </div>
     </section>

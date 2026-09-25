@@ -174,7 +174,7 @@ const MyApplications = () => {
                     <TableRow key={application.id}>
                       <TableCell className="font-medium">
                         <Link
-                          to={`/job/${application.job_id}`}
+                          to={`/jobs/${application.job_id}`}
                           className="hover:text-yellow-700 hover:underline"
                         >
                           {application.job_title}
@@ -183,7 +183,7 @@ const MyApplications = () => {
 
                       <TableCell>
                         <Link
-                          to={`/company/${application.company_id}`}
+                          to={`/companies/${application.company_id}`}
                           className="flex items-center gap-2 hover:text-yellow-700 hover:underline"
                         >
                           {application.company_logo ? (
@@ -223,7 +223,7 @@ const MyApplications = () => {
 
                       <TableCell className="text-right">
                         <Button variant="outline" size="sm" asChild>
-                          <Link to={`/job/${application.job_id}`}>
+                          <Link to={`/jobs/${application.job_id}`}>
                             <Eye className="mr-2 h-4 w-4" />
                             View Job
                           </Link>
