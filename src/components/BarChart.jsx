@@ -1,5 +1,3 @@
-import React from "react";
-import { TrendingUp } from "lucide-react";
 
 import {
   Bar,
@@ -23,15 +21,6 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 
-const chartData = [
-  { month: "January", jobs: 4 },
-  { month: "February", jobs: 7 },
-  { month: "March", jobs: 5 },
-  { month: "April", jobs: 9 },
-  { month: "May", jobs: 12 },
-  { month: "June", jobs: 15 },
-];
-
 const chartConfig = {
   jobs: {
     label: "Jobs Posted",
@@ -39,16 +28,16 @@ const chartConfig = {
   },
 };
 
-const BarChartComponent = () => {
+const BarChartComponent = ({ chartData = [] }) => {
   return (
     <Card>
       <CardHeader>
         <CardTitle>Jobs Posted</CardTitle>
-        <CardDescription>January - June 2026</CardDescription>
+        <CardDescription>{chartData[0]?.month} – {chartData.at(-1)?.month}</CardDescription>
       </CardHeader>
 
       <CardContent>
-        <ChartContainer config={chartConfig}>
+        {chartData.some((row) => row.jobs > 0) ? <ChartContainer config={chartConfig}>
           <RechartsBarChart accessibilityLayer data={chartData}>
             <CartesianGrid vertical={false} />
 
@@ -67,13 +56,12 @@ const BarChartComponent = () => {
 
             <Bar dataKey="jobs" fill="var(--color-jobs)" radius={8} />
           </RechartsBarChart>
-        </ChartContainer>
+        </ChartContainer> : <p className="py-20 text-center text-sm text-muted-foreground">No jobs in the last six months.</p>}
       </CardContent>
 
       <CardFooter className="flex-col items-start gap-2 text-sm">
         <div className="flex gap-2 leading-none font-medium">
-          Job postings increased by 5.2% this month
-          <TrendingUp className="h-4 w-4" />
+          Jobs posted this month: {chartData.at(-1)?.jobs ?? 0}
         </div>
 
         <div className="leading-none text-muted-foreground">

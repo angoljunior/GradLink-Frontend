@@ -1,80 +1,27 @@
-import React from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import api from "@/api/axios";
 import JobsHero from "./JobsHero";
 import JobFilters from "./JobFIlters";
 import JobListCard from "./JobListCard";
 
-
-const jobs = [
-  {
-    id: 1,
-    title: "Graduate Engineer – Network Operations",
-    company: "MTN Ghana",
-    location: "Accra",
-    posted: "10 days ago",
-    salary: "GHS 3,500 - 5,000",
-    type: "Graduate",
-    industry: "Telecom",
-  },
-  {
-    id: 2,
-    title: "Digital Marketing Graduate",
-    company: "MTN Ghana",
-    location: "Accra",
-    posted: "10 days ago",
-    salary: "GHS 2,800 - 4,000",
-    type: "Graduate",
-    industry: "Telecom",
-  },
-  {
-    id: 3,
-    title: "National Service Personnel – IT Support",
-    company: "MTN Ghana",
-    location: "Accra",
-    posted: "10 days ago",
-    salary: "GHS 800 - 800",
-    type: "NSS",
-    industry: "Telecom",
-  },
-  {
-    id: 4,
-    title: "Graduate Banking Officer",
-    company: "GCB Bank",
-    location: "Accra",
-    posted: "10 days ago",
-    salary: "GHS 3,000 - 4,500",
-    type: "Graduate",
-    industry: "Banking",
-  },
-];
-
-const JobsPage = () => {
-  return (
-    <div className="min-h-screen bg-[#f6f8fa]">
-      <JobsHero />
-
-      <section className="max-w-7xl mx-auto px-6 py-10">
-        <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-8">
-          {/* Left Filter Sidebar */}
-          <aside>
-            <JobFilters />
-          </aside>
-
-          {/* Job List */}
-          <main>
-            <h2 className="text-xl font-bold text-slate-900 mb-6">
-              20 Jobs Found
-            </h2>
-
-            <div className="space-y-5">
-              {jobs.map((job) => (
-                <JobListCard key={job.id} job={job} />
-              ))}
-            </div>
-          </main>
-        </div>
-      </section>
-    </div>
-  );
-};
-
-export default JobsPage;
+export default function JobsPage() {
+  const [params] = useSearchParams();
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [filters, setFilters] = useState({ search: params.get("search") || "", location: params.get("location") || "", types: [], industries: [] });
+  useEffect(() => {
+    let active = true;
+    api.get("jobs/").then(({ data }) => { if (active) setJobs(Array.isArray(data) ? data : data.results || []); })
+      .catch(() => { if (active) setError("Unable to load jobs. Please refresh and try again."); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, []);
+  const displayed = useMemo(() => jobs.map((job) => ({
+    ...job, companyId: job.company?.id, company: job.company?.name || "Company", industry: job.company?.industry || "other",
+    type: job.job_type_display, posted: new Date(job.posted_at).toLocaleDateString(),
+    salary: job.salary_min ? `GHS ${job.salary_min}${job.salary_max ? ` - ${job.salary_max}` : ""}` : "Salary not specified",
+  })).filter((job) => `${job.title} ${job.company} ${job.description}`.toLowerCase().includes(filters.search.toLowerCase()) && job.location.toLowerCase().includes(filters.location.toLowerCase()) && (!filters.types.length || filters.types.includes(job.job_type)) && (!filters.industries.length || filters.industries.includes(job.industry))), [jobs, filters]);
+  return <div className="min-h-screen bg-[#f6f8fa]"><JobsHero /><section className="mx-auto max-w-7xl px-6 py-10"><div className="grid gap-8 lg:grid-cols-[320px_1fr]"><aside><JobFilters filters={filters} onChange={setFilters} /></aside><main aria-busy={loading}><h2 className="mb-6 text-xl font-bold">{loading ? "Loading jobs..." : `${displayed.length} Jobs Found`}</h2>{error && <p role="alert">{error}</p>}{!loading && !error && !displayed.length && <p>No jobs match your filters.</p>}<div className="space-y-5">{displayed.map((job) => <JobListCard key={job.id} job={job} />)}</div></main></div></section></div>;
+}

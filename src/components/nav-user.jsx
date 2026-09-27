@@ -1,3 +1,4 @@
+import { clearSession } from "@/lib/session";
 import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -18,14 +19,15 @@ import {
 import {
   EllipsisVerticalIcon,
   CircleUserRoundIcon,
-  CreditCardIcon,
   BellIcon,
   LogOutIcon,
 } from "lucide-react";
 
-export function NavUser({ user }) {
+export function NavUser({ user, role: suppliedRole, showSignOut = false }) {
   const navigate = useNavigate();
-  const role = localStorage.getItem("role") === "employer" ? "employer" : "student";
+  const role =
+    suppliedRole ||
+    (localStorage.getItem("role") === "employer" ? "employer" : "student");
   const { isMobile } = useSidebar();
 
   // handle exit dashboard take user to homepage
@@ -44,7 +46,14 @@ export function NavUser({ user }) {
             >
               <Avatar className="h-8 w-8 rounded-lg grayscale">
                 <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                <AvatarFallback className="rounded-lg">
+                  {user.name
+                    ?.split(" ")
+                    .map((part) => part[0])
+                    .join("")
+                    .slice(0, 2)
+                    .toUpperCase() || "?"}
+                </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user.name}</span>
@@ -65,7 +74,18 @@ export function NavUser({ user }) {
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                  <AvatarImage
+                    src={user.profile_picture}
+                    alt={user.profile_picture}
+                  />
+                  <AvatarFallback className="rounded-lg">
+                    {user.name
+                      ?.split(" ")
+                      .map((part) => part[0])
+                      .join("")
+                      .slice(0, 2)
+                      .toUpperCase() || "?"}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
@@ -77,20 +97,39 @@ export function NavUser({ user }) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => navigate(role === "employer" ? "/employer/company-profile" : "/student/profile")}>
+              <DropdownMenuItem
+                onClick={() =>
+                  navigate(
+                    role === "admin"
+                      ? "/admin/settings"
+                      : role === "employer"
+                        ? "/employer/company-profile"
+                        : "/student/profile",
+                  )
+                }
+              >
                 <CircleUserRoundIcon />
-                Account
+                {role === "admin" ? "Settings" : "Account"}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/pricing")}>
-                <CreditCardIcon />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate(`/${role}/notifications`)}>
+              <DropdownMenuItem
+                onClick={() => navigate(`/${role}/notifications`)}
+              >
                 <BellIcon />
                 Notifications
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
+            {showSignOut && (
+              <DropdownMenuItem
+                onClick={() => {
+                  clearSession();
+                  navigate("/login", { replace: true });
+                }}
+              >
+                <LogOutIcon />
+                Sign out
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem onClick={handleExitDashboard}>
               <LogOutIcon />
               Exit Dashboard

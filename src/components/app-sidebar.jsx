@@ -24,13 +24,14 @@ import {
   MailIcon,
 } from "lucide-react";
 
+export function AppSidebar({ ...props }) {
 const username = localStorage.getItem("name") || "Student";
 
 const data = {
   user: {
     name: username,
-    email: localStorage.getItem("email") || "student@example.com",
-    avatar: "/avatars/shadcn.jpg",
+    email: localStorage.getItem("email") || "",
+    avatar: "",
   },
 
   navMain: [
@@ -78,7 +79,6 @@ const data = {
   ],
 };
 
-export function AppSidebar({ ...props }) {
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>

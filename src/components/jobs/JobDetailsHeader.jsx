@@ -171,14 +171,13 @@ const JobDetailsHeader = ({ job }) => {
 
     if (files) {
       if (
-        name === "cv" &&
         files[0] &&
         (!/\.(pdf|docx|png|jpe?g)$/i.test(files[0].name) ||
           files[0].size > 10 * 1024 * 1024)
       ) {
         e.target.value = "";
-        setApplicationData((previous) => ({ ...previous, cv: null }));
-        toast.error("Please select a PDF, DOCX, PNG, or JPG up to 10 MB.");
+        setApplicationData((previous) => ({ ...previous, [name]: null }));
+        toast.error("Please select a PDF or DOCX up to 10 MB.");
         return;
       }
       setApplicationData((prev) => ({
@@ -196,7 +195,7 @@ const JobDetailsHeader = ({ job }) => {
 
   const handleParse = async () => {
     if (!applicationData.cv) {
-      toast.error("Please select a PDF, DOCX, PNG, or JPG CV.");
+      toast.error("Please select a PDF or DOCX CV.");
       return;
     }
     setParsing(true);
@@ -491,7 +490,8 @@ const JobDetailsHeader = ({ job }) => {
                         onChange={handleApplicationChange}
                       />
                       <p className="text-xs text-muted-foreground">
-                        PDF, DOCX, PNG, or JPG, up to 10 MB. Review all extracted details.
+                        PDF, DOCX, PNG, or JPG, up to 10 MB. Review all
+                        extracted details.
                       </p>
                       <p className="text-xs text-muted-foreground">
                         Upload your CV as a PDF. DOCX is supported, but PDF
@@ -503,7 +503,7 @@ const JobDetailsHeader = ({ job }) => {
                         onClick={handleParse}
                         className="bg-yellow-500 text-black hover:bg-yellow-600"
                       >
-                        {parsing ? "Parsing CV..." : "Upload and Parse CV"}
+                        {parsing ? "Uploading CV..." : "Upload  CV"}
                       </Button>
                     </Field>
                     {[
@@ -603,7 +603,7 @@ const JobDetailsHeader = ({ job }) => {
                         id="transcript"
                         name="transcript"
                         type="file"
-                        accept=".pdf,.doc,.docx"
+                        accept=".pdf,.docx,"
                         onChange={handleApplicationChange}
                       />
                       <p className="text-xs text-muted-foreground">
@@ -617,11 +617,11 @@ const JobDetailsHeader = ({ job }) => {
                         id="coverLetter"
                         name="coverLetter"
                         type="file"
-                        accept=".pdf,.doc,.docx"
+                        accept=".pdf,.docx,"
                         onChange={handleApplicationChange}
                       />
                       <p className="text-xs text-muted-foreground">
-                        Accepted formats: PDF, DOC, DOCX
+                        Accepted formats: PDF, DOCX,
                       </p>
                     </Field>
                   </FieldGroup>

@@ -22,13 +22,14 @@ import {
   FileTextIcon,
 } from "lucide-react";
 
-const username = localStorage.getItem("name") || "Student";
+export function AppSidebar({ ...props }) {
+const username = localStorage.getItem("name") || "Employer";
 
 const data = {
   user: {
     name: username,
-    email: localStorage.getItem("email") || "student@example.com",
-    avatar: "/avatars/shadcn.jpg",
+    email: localStorage.getItem("email") || "",
+    avatar: "",
   },
 
   navMain: [
@@ -63,7 +64,6 @@ const data = {
   ],
 };
 
-export function AppSidebar({ ...props }) {
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>

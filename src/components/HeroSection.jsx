@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import {
   Search,
   MapPin,
@@ -41,17 +42,11 @@ const HeroSection = ({
   locationSearch,
   setLocationSearch,
 }) => {
+  const navigate = useNavigate();
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const employersSection = document.getElementById("top-employers");
-
-    if (employersSection) {
-      employersSection.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }
+    navigate(`/jobs?${new URLSearchParams({ search: jobSearch || "", location: locationSearch || "" })}`);
   };
 
   return (

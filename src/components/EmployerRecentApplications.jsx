@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Loader2,
   Search,
@@ -11,6 +11,7 @@ import {
   Eye,
 } from "lucide-react";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
 
 import {
   Table,
@@ -44,9 +45,46 @@ const statusOptions = [
   { value: "rejected", label: "Rejected" },
 ];
 
-const EmployerRecentApplications = () => {
-  const [applications, setApplications] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const getFileName = (fileUrl) => {
+    if (!fileUrl) return "";
+    return decodeURIComponent(fileUrl.split("/").pop());
+  };
+
+  const DocumentCard = ({ label, fileUrl }) => {
+    if (!fileUrl) {
+      return (
+        <div className="rounded-xl border bg-slate-50 p-4 text-sm text-muted-foreground">
+          No {label.toLowerCase()} uploaded.
+        </div>
+      );
+    }
+
+    return (
+      <a
+        href={fileUrl}
+        target="_blank"
+        rel="noreferrer"
+        className="flex items-center justify-between rounded-xl border bg-white p-4 text-sm transition hover:bg-slate-50"
+      >
+        <div className="flex items-center gap-3">
+          <FileText className="h-5 w-5 text-yellow-600" />
+
+          <div>
+            <p className="font-medium text-slate-900">{label}</p>
+            <p className="text-xs text-slate-500">{getFileName(fileUrl)}</p>
+          </div>
+        </div>
+
+        <Download className="h-4 w-4 text-slate-500" />
+      </a>
+    );
+  };
+
+const EmployerRecentApplications = ({ suppliedApplications, onStatusChanged }) => {
+  const [loadedApplications, setApplications] = useState([]);
+  const applications = suppliedApplications ?? loadedApplications;
+  const [loading, setLoading] = useState(suppliedApplications === undefined);
+  const [loadError, setLoadError] = useState("");
   const [updatingStatusId, setUpdatingStatusId] = useState(null);
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -55,36 +93,31 @@ const EmployerRecentApplications = () => {
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [openDetails, setOpenDetails] = useState(false);
 
-  const fetchRecentApplications = async () => {
+  const fetchRecentApplications = useCallback(async (signal) => {
     try {
       setLoading(true);
 
-      const response = await api.get("/employer/applications/recent/");
+      const response = await api.get("/employer/applications/recent/", { signal });
 
       const applicationsData = Array.isArray(response.data)
         ? response.data
         : response.data.results || [];
 
       setApplications(applicationsData);
+      setLoadError("");
     } catch (error) {
-      console.log(
-        "Failed to fetch employer applications:",
-        error.response?.data || error,
-      );
-
-      toast.error("Failed to load applications", {
-        description:
-          error.response?.data?.detail ||
-          "Please refresh the page and try again.",
-      });
+      if (error.code !== "ERR_CANCELED") setLoadError("Unable to load applications. Please retry.");
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchRecentApplications();
-  }, []);
+    if (suppliedApplications !== undefined) return;
+    const controller = new AbortController();
+    const timer = setTimeout(() => fetchRecentApplications(controller.signal), 0);
+    return () => { clearTimeout(timer); controller.abort(); };
+  }, [suppliedApplications, fetchRecentApplications]);
 
   const filteredApplications = useMemo(() => {
     const searchValue = searchTerm.toLowerCase().trim();
@@ -152,6 +185,7 @@ const EmployerRecentApplications = () => {
         }));
       }
 
+      onStatusChanged?.();
       toast.success("Application status updated", {
         description:
           response.data?.message ||
@@ -189,40 +223,7 @@ const EmployerRecentApplications = () => {
     }
   };
 
-  const getFileName = (fileUrl) => {
-    if (!fileUrl) return "";
-    return decodeURIComponent(fileUrl.split("/").pop());
-  };
 
-  const DocumentCard = ({ label, fileUrl }) => {
-    if (!fileUrl) {
-      return (
-        <div className="rounded-xl border bg-slate-50 p-4 text-sm text-muted-foreground">
-          No {label.toLowerCase()} uploaded.
-        </div>
-      );
-    }
-
-    return (
-      <a
-        href={fileUrl}
-        target="_blank"
-        rel="noreferrer"
-        className="flex items-center justify-between rounded-xl border bg-white p-4 text-sm transition hover:bg-slate-50"
-      >
-        <div className="flex items-center gap-3">
-          <FileText className="h-5 w-5 text-yellow-600" />
-
-          <div>
-            <p className="font-medium text-slate-900">{label}</p>
-            <p className="text-xs text-slate-500">{getFileName(fileUrl)}</p>
-          </div>
-        </div>
-
-        <Download className="h-4 w-4 text-slate-500" />
-      </a>
-    );
-  };
 
   return (
     <>
@@ -263,7 +264,7 @@ const EmployerRecentApplications = () => {
           </div>
         </div>
 
-        {loading ? (
+        {loadError ? <div role="alert" className="p-4 text-red-700">{loadError} <Button variant="outline" onClick={() => fetchRecentApplications()}>Retry</Button></div> : loading ? (
           <div className="flex min-h-[220px] items-center justify-center">
             <div className="flex items-center gap-2 text-slate-500">
               <Loader2 className="h-5 w-5 animate-spin" />
@@ -273,7 +274,7 @@ const EmployerRecentApplications = () => {
         ) : (
           <Table>
             <TableCaption>
-              Recent applications submitted to your posted jobs.
+              {suppliedApplications !== undefined ? <>Your five most recent applicants. <Link className="text-yellow-700 underline" to="/employer/applicants">View all applicants</Link></> : "Applications submitted to your posted jobs."}
             </TableCaption>
 
             <TableHeader>

@@ -58,8 +58,8 @@ const TestCard = ({ test }) => {
         </div>
 
         {/* Button */}
-        <Button className="mt-8 w-full h-12 bg-yellow-500 hover:bg-yellow-600 text-black text-base font-medium rounded-lg">
-          Start Test
+        <Button disabled title="Interactive tests are not available yet" className="mt-8 w-full h-12 bg-yellow-500 hover:bg-yellow-600 text-black text-base font-medium rounded-lg">
+          Test coming soon
           <ArrowRight className="ml-3 h-5 w-5" />
         </Button>
       </CardContent>

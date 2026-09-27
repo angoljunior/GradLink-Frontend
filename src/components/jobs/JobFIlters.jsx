@@ -5,23 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
-const jobTypes = [
-  "Graduate",
-  "Internship",
-  "National Service (NSS)",
-  "Entry Level",
-];
+const jobTypes = ["graduate_program", "internship", "national_service", "entry_level", "trainee"];
+const industries = ["technology", "banking", "telecom", "mining", "engineering", "construction", "health", "education", "oil_gas", "other"];
 
-const industries = [
-  "Technology",
-  "Finance",
-  "Healthcare",
-  "Engineering",
-  "Marketing",
-  "Consulting",
-];
-
-const JobFilters = () => {
+const JobFilters = ({ filters, onChange }) => {
+  const toggle = (key, value) => onChange({ ...filters, [key]: filters[key].includes(value) ? filters[key].filter((item) => item !== value) : [...filters[key], value] });
   return (
     <Card className="rounded-2xl border border-slate-200 bg-white shadow-sm">
       <CardContent className="p-6">
@@ -32,6 +20,7 @@ const JobFilters = () => {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
             <Input
+              aria-label="Search jobs" value={filters.search} onChange={(event) => onChange({ ...filters, search: event.target.value })}
               placeholder="Job title, keywords, or company"
               className="h-11 pl-10 rounded-lg bg-white"
             />
@@ -40,13 +29,14 @@ const JobFilters = () => {
           <div className="relative">
             <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
             <Input
+              aria-label="Filter by location" value={filters.location} onChange={(event) => onChange({ ...filters, location: event.target.value })}
               placeholder="City, region, or remote"
               className="h-11 pl-10 rounded-lg bg-white"
             />
           </div>
 
-          <Button className="w-full h-11 bg-yellow-500 hover:bg-yellow-600 text-black font-semibold rounded-lg">
-            Find Jobs
+          <Button onClick={() => onChange({ search: "", location: "", types: [], industries: [] })} className="w-full h-11 bg-yellow-500 hover:bg-yellow-600 text-black font-semibold rounded-lg">
+            Clear Filters
           </Button>
         </div>
 
@@ -64,7 +54,7 @@ const JobFilters = () => {
                 className="flex items-center gap-3 text-sm text-slate-700 cursor-pointer"
               >
                 <input
-                  type="checkbox"
+                  type="checkbox" checked={filters.types.includes(type)} onChange={() => toggle("types", type)}
                   className="h-4 w-4 rounded border-yellow-400 accent-yellow-500"
                 />
                 <span>{type}</span>
@@ -89,7 +79,7 @@ const JobFilters = () => {
                 className="flex items-center gap-3 text-sm text-slate-700 cursor-pointer"
               >
                 <input
-                  type="checkbox"
+                  type="checkbox" checked={filters.industries.includes(industry)} onChange={() => toggle("industries", industry)}
                   className="h-4 w-4 rounded border-yellow-400 accent-yellow-500"
                 />
                 <span>{industry}</span>

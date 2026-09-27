@@ -1,3 +1,6 @@
+import { useState } from "react";
+import api from "@/api/axios";
+import { toast } from "sonner";
 import { Building2, MapPin, Clock, Banknote, Bookmark } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -5,6 +8,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 const JobListCard = ({ job }) => {
+  const [saving, setSaving] = useState(false);
+  const save = async () => {
+    if (!localStorage.getItem("access") || localStorage.getItem("role") !== "student") { toast.info("Log in as a student to save jobs."); return; }
+    setSaving(true);
+    try { await api.post("saved-jobs/", { job: job.id }); toast.success("Job saved"); }
+    catch (error) { toast.error(error.response?.data?.non_field_errors?.[0] || error.response?.data?.detail || "Unable to save job. It may already be saved."); }
+    finally { setSaving(false); }
+  };
   return (
     <Card className="rounded-2xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition-all duration-300">
       <CardContent className="p-7">
@@ -30,7 +41,7 @@ const JobListCard = ({ job }) => {
                 <p className="mt-1 text-sm text-slate-500">{job.company}</p>
               </div>
 
-              <button className="text-slate-500 hover:text-yellow-600 transition">
+              <button type="button" aria-label="Save job" disabled={saving} onClick={save} className="text-slate-500 hover:text-yellow-600 transition">
                 <Bookmark className="h-5 w-5" />
               </button>
             </div>

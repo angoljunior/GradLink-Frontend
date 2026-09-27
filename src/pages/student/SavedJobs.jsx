@@ -27,7 +27,7 @@ const SavedJobs = () => {
     try {
       setLoading(true);
 
-      const response = await api.get("/saved-jobs");
+      const response = await api.get("/saved-jobs/");
 
       const savedJobsData = Array.isArray(response.data)
         ? response.data

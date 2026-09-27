@@ -1,3 +1,4 @@
+import { storeSession, dashboardPath } from "@/lib/session";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -62,20 +63,13 @@ export function SignupForm({ className, ...props }) {
 
       const data = response.data;
 
-      if (data && data.access) {
-        localStorage.setItem("access", data.access);
-        localStorage.setItem("refresh", data.refresh);
-        localStorage.setItem("email", data.email);
-        localStorage.setItem("role", data.role);
-        localStorage.setItem("isSuperUser", data.isSuperUser);
-        localStorage.setItem("name", data.name);
-        localStorage.setItem("userId", data.userId);
-      }
+      if (!data?.access) throw new Error("Authentication response did not include an access token.");
+      storeSession(data);
 
       toast.success("Account created successfully! ✅");
 
       toast.success("Login Successful! ✅");
-      navigate("/login");
+      navigate(dashboardPath(data), { replace: true });
     } catch (err) {
       const errorMessage =
         err.response?.data?.email?.[0] ||

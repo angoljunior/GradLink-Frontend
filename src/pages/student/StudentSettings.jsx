@@ -6,10 +6,10 @@ const StudentSettings = () => {
       <div className="rounded-xl border bg-card p-6 shadow-sm">
         <h1 className="text-2xl font-bold">Settings</h1>
         <p className="mt-2 text-muted-foreground">
-          Manage your account settings and preferences.
+          Account editing is not available yet. These fields do not save changes.
         </p>
 
-        <form className="mt-6 max-w-xl space-y-4">
+        <form onSubmit={(event) => event.preventDefault()} className="mt-6 max-w-xl space-y-4">
           <div>
             <label className="text-sm font-medium">Full Name</label>
             <input
@@ -37,7 +37,7 @@ const StudentSettings = () => {
             />
           </div>
 
-          <button
+          <button disabled title="Account editing is not available yet"
             type="submit"
             className="rounded-md bg-black px-4 py-2 text-white"
           >

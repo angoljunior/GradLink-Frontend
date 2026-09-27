@@ -1,7 +1,6 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Loader2, Search, Building2, Eye } from "lucide-react";
-import { toast } from "sonner";
 
 import {
   Table,
@@ -16,43 +15,40 @@ import {
 import { Button } from "@/components/ui/button";
 import api from "@/api/axios";
 
-const MyApplications = () => {
-  const [applications, setApplications] = useState([]);
-  const [loading, setLoading] = useState(true);
+const MyApplications = ({ suppliedApplications, recent = false }) => {
+  const [loadedApplications, setApplications] = useState([]);
+  const applications = suppliedApplications ?? loadedApplications;
+  const [loading, setLoading] = useState(suppliedApplications === undefined);
+  const [loadError, setLoadError] = useState("");
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
 
-  const fetchMyApplications = async () => {
+  const fetchMyApplications = useCallback(async (signal) => {
     try {
       setLoading(true);
 
-      const response = await api.get("/student/applications/");
+      const response = await api.get("/student/applications/", { signal });
 
       const applicationsData = Array.isArray(response.data)
         ? response.data
         : response.data.results || [];
 
       setApplications(applicationsData);
+      setLoadError("");
     } catch (error) {
-      console.log(
-        "Failed to fetch student applications:",
-        error.response?.data || error,
-      );
-
-      toast.error("Failed to load applications", {
-        description:
-          error.response?.data?.detail ||
-          "Please refresh the page and try again.",
-      });
+      if (error.code !== "ERR_CANCELED") setLoadError("Unable to load applications. Please retry.");
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchMyApplications();
-  }, []);
+    if (suppliedApplications !== undefined) return;
+    const controller = new AbortController();
+    const timer = setTimeout(() => fetchMyApplications(controller.signal), 0);
+    return () => { clearTimeout(timer); controller.abort(); };
+  }, [suppliedApplications, fetchMyApplications]);
 
   const filteredApplications = useMemo(() => {
     const searchValue = searchTerm.toLowerCase().trim();
@@ -108,9 +104,9 @@ const MyApplications = () => {
       <div className="rounded-xl border bg-card p-6 shadow-sm">
         <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-2xl font-bold">My Applications</h1>
+            <h1 className="text-2xl font-bold">{recent ? "Recent Applications" : "My Applications"}</h1>
             <p className="mt-2 text-muted-foreground">
-              View and track all jobs you have applied for.
+              {recent ? "Your five most recent applications." : "View and track all jobs you have applied for."}
             </p>
           </div>
 
@@ -143,7 +139,7 @@ const MyApplications = () => {
           </div>
         </div>
 
-        {loading ? (
+        {loadError ? <div role="alert" className="p-4 text-red-700">{loadError} <Button variant="outline" onClick={() => fetchMyApplications()}>Retry</Button></div> : loading ? (
           <div className="flex min-h-[240px] items-center justify-center">
             <div className="flex items-center gap-2 text-slate-500">
               <Loader2 className="h-5 w-5 animate-spin" />
@@ -153,8 +149,8 @@ const MyApplications = () => {
         ) : (
           <div className="overflow-x-auto">
             <Table>
-              <TableCaption>
-                A list of all jobs you have applied for.
+              <TableCaption>{recent && <Link className="mr-2 text-yellow-700 underline" to="/student/applications">View all applications</Link>}
+                {recent ? "Recent jobs you have applied for." : "A list of all jobs you have applied for."}
               </TableCaption>
 
               <TableHeader>

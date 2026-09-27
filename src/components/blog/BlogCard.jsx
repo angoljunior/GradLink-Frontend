@@ -7,10 +7,10 @@ import { Card, CardContent } from "@/components/ui/card";
 const BlogCard = ({ post }) => {
   return (
 
-    <Link to={`/career-advice/${articleSlug(post)}`}>
+    <Link to={`/career-advice/${post.slug || articleSlug(post)}`}>
         <Card className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition-all duration-300">
       {/* Image placeholder */}
-      <div className="h-48 bg-gradient-to-br from-yellow-100 via-slate-100 to-emerald-100" />
+      {post.featured_image ? <img src={post.featured_image} alt="" className="h-48 w-full object-cover" /> : <div className="h-48 bg-gradient-to-br from-yellow-100 via-slate-100 to-emerald-100" />}
 
       <CardContent className="p-6">
         <h3 className="text-xl font-bold leading-snug text-slate-950">

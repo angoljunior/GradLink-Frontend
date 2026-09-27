@@ -425,7 +425,7 @@ const StudentDocuments = () => {
                 {profileDocs?.cv_url ? "Replace CV" : "Upload CV"}
                 <input
                   type="file"
-                  accept=".pdf,.doc,.docx"
+                  accept=".pdf,.docx,.png,.jpg,.jpeg"
                   className="hidden"
                   onChange={(e) =>
                     handleProfileFileUpload("cv", e.target.files[0])
@@ -493,7 +493,7 @@ const StudentDocuments = () => {
                   : "Upload Transcript"}
                 <input
                   type="file"
-                  accept=".pdf,.doc,.docx"
+                  accept=".pdf,.docx,.png,.jpg,.jpeg"
                   className="hidden"
                   onChange={(e) =>
                     handleProfileFileUpload("transcript", e.target.files[0])
@@ -583,7 +583,7 @@ const StudentDocuments = () => {
 
                 <input
                   type="file"
-                  accept=".pdf,.doc,.docx"
+                  accept=".pdf,.docx,.png,.jpg,.jpeg"
                   onChange={(e) =>
                     setCoverForm((prev) => ({
                       ...prev,

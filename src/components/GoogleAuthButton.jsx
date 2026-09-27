@@ -1,4 +1,4 @@
-import React from "react";
+import { storeSession, dashboardPath } from "@/lib/session";
 import { GoogleLogin } from "@react-oauth/google";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -15,20 +15,13 @@ const GoogleAuthButton = ({ role = "student" }) => {
         role,
       });
 
-      localStorage.setItem("access", response.data.access);
-      localStorage.setItem("refresh", response.data.refresh);
-      localStorage.setItem("role", response.data.role);
-      localStorage.setItem("userName", response.data.username);
+      storeSession(response.data);
 
       toast.success("Google login successful", {
         description: "Welcome to GradLink Ghana.",
       });
 
-      if (response.data.role === "employer") {
-        navigate("/employer/dashboard");
-      } else {
-        navigate("/student/dashboard");
-      }
+      navigate(dashboardPath(response.data), { replace: true });
     } catch (error) {
       console.log("Google auth error:", error.response?.data || error);
 

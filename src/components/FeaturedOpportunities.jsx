@@ -20,6 +20,7 @@ import api from "@/api/axios";
 
 const FeaturedOpportunities = () => {
   const [opportunities, setOpportunities] = useState([]);
+  const [savingJob, setSavingJob] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const fetchFeaturedJobs = async () => {
@@ -83,7 +84,7 @@ const FeaturedOpportunities = () => {
     return `${differenceInDays} days ago`;
   };
 
-  const handleSaveJob = async () => {
+  const handleSaveJob = async (jobId) => {
     const token = localStorage.getItem("access");
     const role = localStorage.getItem("role");
 
@@ -105,7 +106,7 @@ const FeaturedOpportunities = () => {
       setSavingJob(true);
 
       await api.post("/saved-jobs/", {
-        job: job.id,
+        job: jobId,
       });
 
       toast.success("Job saved", {
@@ -226,7 +227,7 @@ const FeaturedOpportunities = () => {
                           </div>
 
                           <button
-                            type="button"
+                            type="button" aria-label="Save job" disabled={savingJob}
                             className="text-slate-500 transition hover:text-yellow-600"
                             onClick={(e) => {
                               e.preventDefault();

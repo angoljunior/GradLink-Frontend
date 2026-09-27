@@ -1,9 +1,9 @@
+import { clearSession, dashboardPath as getDashboardPath } from "@/lib/session";
 import { Link, useNavigate } from "react-router-dom";
 import {
   BriefcaseBusiness,
   Sun,
   Moon,
-  BadgeCheckIcon,
   BellIcon,
   LogOutIcon,
   LayoutDashboardIcon,
@@ -31,28 +31,27 @@ const Navbar = () => {
   const accessToken = localStorage.getItem("access");
   const userName = localStorage.getItem("userName") || "User";
   const userRole = localStorage.getItem("role");
-  // role should be either "student" or "employer"
+  const isAdmin = localStorage.getItem("isAdmin") === "true";
 
   const isLoggedIn = Boolean(accessToken);
 
-  const dashboardPath =
-    userRole === "employer" ? "/employer/dashboard" : "/student/dashboard";
+  const dashboardPath = getDashboardPath({ role: userRole, is_admin: isAdmin });
 
-  const dashboardLabel =
-    userRole === "employer" ? "Employer Dashboard" : "Student Dashboard";
+  const dashboardLabel = isAdmin
+    ? "Admin Portal"
+    : userRole === "employer"
+      ? "Employer Dashboard"
+      : "Student Dashboard";
 
   const handleLogout = () => {
-    localStorage.removeItem("access");
-    localStorage.removeItem("refresh");
-    localStorage.removeItem("userName");
-    localStorage.removeItem("role");
+    clearSession();
 
     navigate("/login");
   };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white/90 backdrop-blur-md dark:border-slate-800 dark:bg-slate-950/90">
-      <div className="mx-auto flex h-12 max-w-7xl items-center justify-between px-6">
+      <div className="mx-auto flex min-h-12 flex-wrap gap-2 py-2 max-w-7xl items-center justify-between px-6">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
           <BriefcaseBusiness className="h-5 w-5 text-yellow-500" />
@@ -80,11 +79,36 @@ const Navbar = () => {
             About
           </Link>
 
-          <Link to="/career-advice" className="transition hover:text-yellow-600">
+          <Link
+            to="/career-advice"
+            className="transition hover:text-yellow-600"
+          >
             Career Advice
           </Link>
         </nav>
 
+        <div className="md:hidden">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" aria-label="Open navigation">
+                Menu
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {[
+                ["/jobs", "Jobs"],
+                ["/companies", "Companies"],
+                ["/tests", "Tests"],
+                ["/career-advice", "Career Advice"],
+                ["/about", "About"],
+              ].map(([url, label]) => (
+                <DropdownMenuItem key={url} onClick={() => navigate(url)}>
+                  {label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
         {/* Right Section */}
         <div className="flex items-center gap-3">
           {/* Theme Toggle */}
@@ -156,17 +180,20 @@ const Navbar = () => {
 
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuGroup>
-                  <DropdownMenuItem onClick={() => navigate(userRole === "employer" ? "/employer/company-profile" : "/student/profile")}>
-                    <BadgeCheckIcon className="mr-2 h-4 w-4" />
-                    Account
-                  </DropdownMenuItem>
-
                   <DropdownMenuItem onClick={() => navigate(dashboardPath)}>
                     <LayoutDashboardIcon className="mr-2 h-4 w-4" />
                     {dashboardLabel}
                   </DropdownMenuItem>
 
-                  <DropdownMenuItem onClick={() => navigate(userRole === "employer" ? "/employer/notifications" : "/student/notifications")}>
+                  <DropdownMenuItem
+                    onClick={() =>
+                      navigate(
+                        userRole === "employer"
+                          ? "/employer/notifications"
+                          : "/student/notifications",
+                      )
+                    }
+                  >
                     <BellIcon className="mr-2 h-4 w-4" />
                     Notifications
                   </DropdownMenuItem>
@@ -174,6 +201,12 @@ const Navbar = () => {
                   <DropdownMenuItem onClick={() => navigate("/register")}>
                     <UserPlusIcon className="mr-2 h-4 w-4" />
                     Sign Up
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => navigate("/admin/dashboard`.")}
+                  >
+                    <UserPlusIcon className="mr-2 h-4 w-4" />
+                    Amdin Portal
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
 

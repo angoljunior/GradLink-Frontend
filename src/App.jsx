@@ -30,6 +30,10 @@ import ManageJobs from "./pages/employer/ManageJobs";
 import SavedJobs from "./pages/student/SavedJobs";
 import Applicants from "./pages/employer/Applicants";
 
+import AdminLayout from "./layouts/AdminLayout";
+import AdminOverview from "./pages/admin/AdminOverview";
+import AdminModule from "./pages/admin/AdminModule";
+
 import "./App.css";
 import Messages from "./pages/student/Messages";
 
@@ -82,6 +86,13 @@ function App() {
           <Route path="/career-advice" element={<Blog />} />
           <Route path="/career-advice/:slug" element={<ArticleDetailsPage />} />
           <Route path="/companies/:id" element={<CompanyProfile />} />
+        </Route>
+
+        <Route path="/admin" element={<ProtectedRoute allowedRole="admin"><AdminLayout /></ProtectedRoute>}>
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<AdminOverview />} />
+          <Route path="analytics" element={<AdminOverview analytics />} />
+          {["users", "employers", "jobs", "applications", "verifications", "reports", "subscriptions", "content", "tests", "notifications", "activity", "settings"].map((module) => <Route key={module} path={module} element={<AdminModule key={module} module={module} />} />)}
         </Route>
 
         {/* Student dashboard nested routes */}

@@ -1,5 +1,3 @@
-import React from "react";
-import { TrendingUp } from "lucide-react";
 
 import {
   CartesianGrid,
@@ -24,15 +22,6 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 
-const chartData = [
-  { month: "January", applications: 18, shortlisted: 5 },
-  { month: "February", applications: 25, shortlisted: 8 },
-  { month: "March", applications: 32, shortlisted: 12 },
-  { month: "April", applications: 21, shortlisted: 7 },
-  { month: "May", applications: 40, shortlisted: 15 },
-  { month: "June", applications: 48, shortlisted: 18 },
-];
-
 const chartConfig = {
   applications: {
     label: "Applications",
@@ -44,16 +33,16 @@ const chartConfig = {
   },
 };
 
-const LineChartComponent = () => {
+const LineChartComponent = ({ chartData = [] }) => {
   return (
     <Card>
       <CardHeader>
         <CardTitle>Candidate Applications Trend</CardTitle>
-        <CardDescription>January - June 2026</CardDescription>
+        <CardDescription>{chartData[0]?.month} – {chartData.at(-1)?.month}</CardDescription>
       </CardHeader>
 
       <CardContent>
-        <ChartContainer config={chartConfig}>
+        {chartData.some((row) => row.applications > 0) ? <ChartContainer config={chartConfig}>
           <RechartsLineChart
             accessibilityLayer
             data={chartData}
@@ -111,17 +100,16 @@ const LineChartComponent = () => {
               }}
             />
           </RechartsLineChart>
-        </ChartContainer>
+        </ChartContainer> : <p className="py-20 text-center text-sm text-muted-foreground">No applications in the last six months.</p>}
       </CardContent>
 
       <CardFooter className="flex-col items-start gap-2 text-sm">
         <div className="flex gap-2 leading-none font-medium">
-          Applications increased by 5.2% this month
-          <TrendingUp className="h-4 w-4" />
+          Applications this month: {chartData.at(-1)?.applications ?? 0}
         </div>
 
         <div className="leading-none text-muted-foreground">
-          Showing total candidate applications for the last 6 months
+          Applications grouped by submission month; shortlisted shows their current status.
         </div>
       </CardFooter>
     </Card>

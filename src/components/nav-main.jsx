@@ -6,9 +6,11 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 export function NavMain({ items }) {
+  const { isMobile, setOpenMobile } = useSidebar();
   return (
     <SidebarGroup>
       <SidebarGroupContent>
@@ -21,7 +23,8 @@ export function NavMain({ items }) {
                 <SidebarMenuButton asChild>
                   <NavLink
                     to={item.url}
-                    end={item.url === "/student/dashboard"}
+                    end={item.url.endsWith("/dashboard")}
+                    onClick={() => { if (isMobile) setOpenMobile(false); }}
                     className={({ isActive }) =>
                       isActive ? "bg-black text-white" : "text-muted-foreground"
                     }
