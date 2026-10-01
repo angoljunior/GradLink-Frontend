@@ -1,0 +1,17 @@
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+
+export default function JobScreeningFields({ questions=[], config={}, tests=[], onQuestions, onConfig }) {
+  const updateQuestion = (index, key, value) => onQuestions(questions.map((q,i)=>i===index?{...q,[key]:value}:q));
+  const updateRule = (key, value) => onConfig({...config,[key]:{...config[key],...value}});
+  return <section className="space-y-4 rounded-xl border p-4 md:col-span-2"><h3 className="font-semibold">Screening and matching</h3><p className="text-sm text-muted-foreground">Job-related evidence only. Scores assist review and never automatically reject or hire applicants. Desired answers use case-insensitive exact matching.</p>
+    {questions.map((q,index)=><div key={q.id||`new-${index}`} className="grid gap-3 rounded border p-3"><label>Question<Input required maxLength={500} value={q.question} onChange={e=>updateQuestion(index,'question',e.target.value)} /></label><label>Desired answer (optional)<Input maxLength={500} value={q.desired_answer} onChange={e=>updateQuestion(index,'desired_answer',e.target.value)} /></label><label>Answer weight<Input type="number" min={0} max={100} value={q.weight} onChange={e=>updateQuestion(index,'weight',Number(e.target.value))} /></label><label className="flex items-center gap-2"><Checkbox checked={q.required} onCheckedChange={value=>updateQuestion(index,'required',!!value)} />Required answer</label><Button type="button" variant="outline" onClick={()=>onQuestions(questions.filter((_,i)=>i!==index))}>Remove question</Button></div>)}
+    <Button type="button" variant="outline" disabled={questions.length>=25} onClick={()=>onQuestions([...questions,{question:'',required:true,desired_answer:'',weight:1}])}>Add screening question</Button>
+    {['education','skills','experience','certifications'].map(key=><div key={key} className="grid gap-2 sm:grid-cols-[1fr_110px]"><label className="capitalize">{key} terms (comma separated)<Input value={(config[key]?.terms||[]).join(',')} onChange={e=>updateRule(key,{terms:e.target.value.split(',')})} /></label><label>Weight<Input type="number" min={0} max={100} value={config[key]?.weight??1} onChange={e=>updateRule(key,{weight:Number(e.target.value)})} /></label></div>)}
+    <label className="block">Screening score weight<Input type="number" min={0} max={100} value={config.screening?.weight??1} onChange={e=>updateRule('screening',{weight:Number(e.target.value)})} /></label>
+    <div><p className="mb-2">Psychometric assessment (optional)</p><Select value={String(config.assessment?.test_id || 'none')} onValueChange={value=>{if(value!=='none')updateRule('assessment',{test_id:Number(value)});else{const next={...config};delete next.assessment;onConfig(next);}}}><SelectTrigger aria-label="Psychometric assessment"><SelectValue placeholder="No assessment" /></SelectTrigger><SelectContent><SelectItem value="none">No assessment</SelectItem>{tests.map(test=><SelectItem key={test.id} value={String(test.id)}>{test.title}</SelectItem>)}</SelectContent></Select></div>
+    {config.assessment?.test_id && <label className="block">Assessment weight<Input type="number" min={0} max={100} value={config.assessment?.weight??1} onChange={e=>updateRule('assessment',{weight:Number(e.target.value)})} /></label>}
+  </section>;
+}

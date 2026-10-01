@@ -1,4 +1,4 @@
-import { storeSession, dashboardPath } from "@/lib/session";
+import { registrationDeviceId, signupError } from "@/lib/registration";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -59,25 +59,15 @@ export function SignupForm({ className, ...props }) {
         email,
         role,
         password,
+        device_id: registrationDeviceId(),
       });
 
       const data = response.data;
 
-      if (!data?.access) throw new Error("Authentication response did not include an access token.");
-      storeSession(data);
-
-      toast.success("Account created successfully! ✅");
-
-      toast.success("Login Successful! ✅");
-      navigate(dashboardPath(data), { replace: true });
+      toast.success(data.message || "Account created. You can now sign in.");
+      navigate("/login", { replace: true });
     } catch (err) {
-      const errorMessage =
-        err.response?.data?.email?.[0] ||
-        err.response?.data?.role?.[0] ||
-        err.response?.data?.password?.[0] ||
-        err.response?.data?.detail ||
-        err.response?.data?.message ||
-        "Registration failed.";
+      const errorMessage = signupError(err);
 
       setError(errorMessage);
       toast.error(errorMessage);
@@ -132,7 +122,7 @@ export function SignupForm({ className, ...props }) {
 
           <FieldDescription>
             We&apos;ll use this to contact you. We will not share your email
-            with anyone else.
+            with anyone else. A random browser identifier helps prevent signup abuse.
           </FieldDescription>
         </Field>
 

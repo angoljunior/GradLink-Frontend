@@ -7,7 +7,7 @@ export function SectionCards({ metrics, role = "student" }) {
     { title: "Active Jobs", value: metrics.active_jobs, description: "Approved jobs accepting applications", footerText: `${metrics.total_jobs} total jobs · ${metrics.pending_jobs} awaiting approval`, icon: BriefcaseIcon },
     { title: "Total Applications", value: metrics.total_applications, description: "Applications to your company's jobs", footerText: "Includes all recruitment statuses", icon: FileTextIcon },
     { title: "Shortlisted Candidates", value: metrics.shortlisted_candidates, description: "Candidates currently shortlisted", footerText: "Distinct candidates across your jobs", icon: BookmarkIcon },
-    { title: "Hired Candidates", value: metrics.hired_candidates, description: "Candidates with accepted applications", footerText: "Distinct candidates across your jobs", icon: UserCheckIcon },
+    { title: "Hired Candidates", value: metrics.hired_candidates, description: "Candidates with hired applications", footerText: "Distinct candidates across your jobs", icon: UserCheckIcon },
   ] : [
     { title: "Profile Completion", value: `${metrics.profile_completion}%`, description: "Based on your saved profile", footerText: "Name, education, location, skills and CV", icon: UserCheckIcon },
     { title: "AI CV Score", value: metrics.ai_cv_score ?? "Not available", description: metrics.ai_cv_score == null ? "No CV review recorded yet" : "Latest recorded CV review", footerText: "A score appears when a review is available", icon: FileTextIcon },

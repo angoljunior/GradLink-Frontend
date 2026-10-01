@@ -1,3 +1,4 @@
+import { registrationDeviceId, signupError } from "@/lib/registration";
 import { storeSession, dashboardPath } from "@/lib/session";
 import { GoogleLogin } from "@react-oauth/google";
 import { toast } from "sonner";
@@ -13,6 +14,7 @@ const GoogleAuthButton = ({ role = "student" }) => {
       const response = await api.post("/auth/google/", {
         token: credentialResponse.credential,
         role,
+        device_id: registrationDeviceId(),
       });
 
       storeSession(response.data);
@@ -23,12 +25,11 @@ const GoogleAuthButton = ({ role = "student" }) => {
 
       navigate(dashboardPath(response.data), { replace: true });
     } catch (error) {
-      console.log("Google auth error:", error.response?.data || error);
+
 
       toast.error("Google authentication failed", {
         description:
-          error.response?.data?.detail ||
-          "Please try again or use email/password.",
+          signupError(error),
       });
     }
   };

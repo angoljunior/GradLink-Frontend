@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
+import JobScreeningFields from '@/components/employer/JobScreeningFields';
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Briefcase,
   Plus,
@@ -25,6 +26,8 @@ import {
 import api from "@/api/axios";
 
 const emptyForm = {
+  screening_questions: [],
+  matching_config: {},
   title: "",
   category: "",
   description: "",
@@ -42,6 +45,7 @@ const emptyForm = {
 const ManageJobs = ({ initiallyOpen = false }) => {
   const [jobs, setJobs] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [tests, setTests] = useState([]);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -59,17 +63,19 @@ const ManageJobs = ({ initiallyOpen = false }) => {
     return Array.isArray(data) ? data : data.results || [];
   };
 
-  const fetchEmployerJobs = async () => {
+  const fetchEmployerJobs = useCallback(async () => {
     try {
       setLoading(true);
 
-      const [jobsResponse, categoriesResponse] = await Promise.all([
+      const [jobsResponse, categoriesResponse, testsResponse] = await Promise.all([
         api.get("/employer/jobs/"),
         api.get("/job-categories/"),
+        api.get("/psychometric-tests/"),
       ]);
 
       setJobs(getArrayData(jobsResponse.data));
       setCategories(getArrayData(categoriesResponse.data));
+      setTests(getArrayData(testsResponse.data));
     } catch (error) {
       console.log(
         "Failed to fetch employer jobs:",
@@ -84,11 +90,12 @@ const ManageJobs = ({ initiallyOpen = false }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchEmployerJobs();
-  }, []);
+    const timer = setTimeout(() => fetchEmployerJobs(), 0);
+    return () => clearTimeout(timer);
+  }, [fetchEmployerJobs]);
 
   const filteredJobs = useMemo(() => {
     return jobs.filter((job) => {
@@ -132,6 +139,8 @@ const ManageJobs = ({ initiallyOpen = false }) => {
 
   const buildPayload = () => {
     return {
+      screening_questions: formData.screening_questions,
+      matching_config: Object.fromEntries(Object.entries(formData.matching_config).map(([key,rule])=>[key,rule.terms?{...rule,terms:rule.terms.map(t=>t.trim()).filter(Boolean)}:rule])),
       title: formData.title,
       category: formData.category ? Number(formData.category) : null,
       description: formData.description,
@@ -226,6 +235,8 @@ const ManageJobs = ({ initiallyOpen = false }) => {
     setEditingJobId(job.id);
 
     setFormData({
+      screening_questions: job.screening_questions || [],
+      matching_config: job.matching_config || {},
       title: job.title || "",
       category: job.category || job.category_details?.id || "",
       description: job.description || "",
@@ -313,15 +324,6 @@ const ManageJobs = ({ initiallyOpen = false }) => {
     return "Open";
   };
 
-  const formatDate = (dateValue) => {
-    if (!dateValue) return "Not specified";
-
-    return new Date(dateValue).toLocaleDateString("en-GH", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
 
   const formatPostedDate = (dateValue) => {
     if (!dateValue) return "Recently";
@@ -541,7 +543,8 @@ const ManageJobs = ({ initiallyOpen = false }) => {
               </label>
             </div>
 
-            <div className="flex items-end justify-start gap-3 md:col-span-2">
+            <JobScreeningFields tests={tests} questions={formData.screening_questions} config={formData.matching_config} onQuestions={screening_questions=>setFormData(prev=>({...prev,screening_questions}))} onConfig={matching_config=>setFormData(prev=>({...prev,matching_config}))} />
+<div className="flex items-end justify-start gap-3 md:col-span-2">
               <button
                 type="submit"
                 disabled={submitting}
@@ -564,7 +567,8 @@ const ManageJobs = ({ initiallyOpen = false }) => {
                 Cancel
               </button>
             </div>
-          </form>
+          
+              </form>
         </div>
       )}
 

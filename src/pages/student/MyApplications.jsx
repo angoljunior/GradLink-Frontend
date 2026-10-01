@@ -1,3 +1,5 @@
+import ApplicationNextStep from '@/components/student/ApplicationNextStep';
+import { applicationStatuses } from '@/lib/application-statuses';
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Loader2, Search, Building2, Eye } from "lucide-react";
@@ -78,9 +80,11 @@ const MyApplications = ({ suppliedApplications, recent = false }) => {
         return "bg-blue-100 text-blue-700";
       case "shortlisted":
         return "bg-green-100 text-green-700";
-      case "interview":
+      case "interview_invited":
+      case "interview_scheduled":
+      case "interviewed":
         return "bg-purple-100 text-purple-700";
-      case "accepted":
+      case "hired":
         return "bg-emerald-100 text-emerald-700";
       case "rejected":
         return "bg-red-100 text-red-700";
@@ -129,12 +133,7 @@ const MyApplications = ({ suppliedApplications, recent = false }) => {
               className="h-10 rounded-md border px-3 text-sm outline-none focus:border-black"
             >
               <option value="All">All Status</option>
-              <option value="submitted">Submitted</option>
-              <option value="reviewed">Reviewed</option>
-              <option value="shortlisted">Shortlisted</option>
-              <option value="interview">Interview</option>
-              <option value="accepted">Accepted</option>
-              <option value="rejected">Rejected</option>
+              {applicationStatuses.map(item=><option key={item.value} value={item.value}>{item.label}</option>)}
             </select>
           </div>
         </div>
@@ -217,7 +216,7 @@ const MyApplications = ({ suppliedApplications, recent = false }) => {
                         </div>
                       </TableCell>
 
-                      <TableCell className="text-right">
+                      <TableCell className="text-right"><ApplicationNextStep application={application} onChanged={suppliedApplications === undefined ? fetchMyApplications : undefined} />
                         <Button variant="outline" size="sm" asChild>
                           <Link to={`/jobs/${application.job_id}`}>
                             <Eye className="mr-2 h-4 w-4" />

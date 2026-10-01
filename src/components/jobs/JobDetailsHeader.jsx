@@ -37,6 +37,7 @@ const JobDetailsHeader = ({ job }) => {
   const navigate = useNavigate();
   const [parsing, setParsing] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [screeningAnswers, setScreeningAnswers] = useState({});
   const handleDialogChange = (open) => {
     if (parsing || applying) return;
     if (open && !localStorage.getItem("access")) {
@@ -238,6 +239,7 @@ const JobDetailsHeader = ({ job }) => {
     const formData = new FormData();
 
     formData.append("job", job.id);
+    formData.append('screening_answers', JSON.stringify((job.screening_questions || []).map(q=>({question:q.id, answer:screeningAnswers[q.id] || ''}))));
     if (applicationData.coverLetter)
       formData.append("cover_letter", applicationData.coverLetter);
     for (const [field, key] of Object.entries({
@@ -478,7 +480,7 @@ const JobDetailsHeader = ({ job }) => {
                 </DialogHeader>
 
                 <fieldset disabled={parsing || applying}>
-                  <FieldGroup className="mt-5 space-y-4">
+                  <FieldGroup className="mt-5 space-y-4">{(job.screening_questions || []).map(question=><Field key={question.id}><Label htmlFor={`screening-${question.id}`}>{question.question}{question.required?' *':''}</Label><Input id={`screening-${question.id}`} required={question.required} maxLength={2000} value={screeningAnswers[question.id]||''} onChange={event=>setScreeningAnswers(prev=>({...prev,[question.id]:event.target.value}))} /></Field>)}
                     <Field>
                       <Label htmlFor="cv">CV / Resume</Label>
                       <Input

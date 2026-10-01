@@ -1,6 +1,7 @@
+import { applicationStatuses } from '@/lib/application-statuses';
 const yesNo = [["true", "Yes"], ["false", "No"]];
 const roles = [["student", "Student"], ["employer", "Employer"], ["university", "University"], ["admin", "Admin"]];
-const statuses = ["submitted", "reviewed", "shortlisted", "interview", "accepted", "rejected"].map((v) => [v, v]);
+const statuses = applicationStatuses.map(item => [item.value, item.label]);
 const verificationStatuses = ["pending", "approved", "rejected"].map((v) => [v, v]);
 const types = [["graduate_program", "Graduate program"], ["internship", "Internship"], ["entry_level", "Entry level"], ["national_service", "National service"], ["trainee", "Trainee"]];
 const testTypes = [["numerical", "Numerical"], ["verbal", "Verbal"], ["logical", "Logical"]];

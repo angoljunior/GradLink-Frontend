@@ -1,3 +1,7 @@
+import { applicationStatuses as statusOptions } from '@/lib/application-statuses';
+import { RecruitmentActionMenu, BulkRecruitmentToolbar } from './employer/RecruitmentControls';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Loader2,
@@ -10,7 +14,6 @@ import {
   X,
   Eye,
 } from "lucide-react";
-import { toast } from "sonner";
 import { Link } from "react-router-dom";
 
 import {
@@ -35,15 +38,6 @@ import {
 
 import api from "@/api/axios";
 import MessageCandidateDialog from "./employer/MessageCandidateDialog";
-
-const statusOptions = [
-  { value: "submitted", label: "Submitted" },
-  { value: "reviewed", label: "Reviewed" },
-  { value: "shortlisted", label: "Shortlisted" },
-  { value: "interview", label: "Interview" },
-  { value: "accepted", label: "Accepted" },
-  { value: "rejected", label: "Rejected" },
-];
 
   const getFileName = (fileUrl) => {
     if (!fileUrl) return "";
@@ -85,7 +79,11 @@ const EmployerRecentApplications = ({ suppliedApplications, onStatusChanged }) =
   const applications = suppliedApplications ?? loadedApplications;
   const [loading, setLoading] = useState(suppliedApplications === undefined);
   const [loadError, setLoadError] = useState("");
-  const [updatingStatusId, setUpdatingStatusId] = useState(null);
+  const [selected, setSelected] = useState([]);
+  const [jobFilter, setJobFilter] = useState('All');
+  const jobs = [...new Map(applications.map(a=>[a.job_id, {id:a.job_id,title:a.role}])).values()];
+  const changed = () => { setSelected([]); setOpenDetails(false); if (onStatusChanged) onStatusChanged(); else fetchRecentApplications(); };
+
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -139,69 +137,13 @@ const EmployerRecentApplications = ({ suppliedApplications, onStatusChanged }) =
       const matchesStatus =
         statusFilter === "All" || application.status === statusFilter;
 
-      return matchesSearch && matchesStatus;
+      return matchesSearch && matchesStatus && (jobFilter === 'All' || application.job_id === Number(jobFilter));
     });
-  }, [applications, searchTerm, statusFilter]);
+  }, [applications, searchTerm, statusFilter, jobFilter]);
 
   const handleViewApplication = (application) => {
     setSelectedApplication(application);
     setOpenDetails(true);
-  };
-
-  const handleStatusUpdate = async (application, newStatus) => {
-    if (application.status === newStatus) return;
-
-    try {
-      setUpdatingStatusId(application.id);
-
-      const response = await api.patch(
-        `/employer/applications/${application.id}/status/`,
-        {
-          status: newStatus,
-        },
-      );
-
-      const updatedStatusLabel =
-        statusOptions.find((item) => item.value === newStatus)?.label ||
-        newStatus;
-
-      setApplications((prevApplications) =>
-        prevApplications.map((item) =>
-          item.id === application.id
-            ? {
-                ...item,
-                status: newStatus,
-                status_display: updatedStatusLabel,
-              }
-            : item,
-        ),
-      );
-
-      if (selectedApplication?.id === application.id) {
-        setSelectedApplication((prev) => ({
-          ...prev,
-          status: newStatus,
-          status_display: updatedStatusLabel,
-        }));
-      }
-
-      onStatusChanged?.();
-      toast.success("Application status updated", {
-        description:
-          response.data?.message ||
-          `The applicant has been marked as ${updatedStatusLabel}.`,
-      });
-    } catch (error) {
-      console.log("Status update failed:", error.response?.data || error);
-
-      toast.error("Failed to update status", {
-        description:
-          error.response?.data?.detail ||
-          "Please try again. The applicant was not notified.",
-      });
-    } finally {
-      setUpdatingStatusId(null);
-    }
   };
 
   const getStatusStyle = (status) => {
@@ -212,9 +154,11 @@ const EmployerRecentApplications = ({ suppliedApplications, onStatusChanged }) =
         return "bg-blue-100 text-blue-700";
       case "shortlisted":
         return "bg-green-100 text-green-700";
-      case "interview":
+      case "interview_invited":
+      case "interview_scheduled":
+      case "interviewed":
         return "bg-purple-100 text-purple-700";
-      case "accepted":
+      case "hired":
         return "bg-emerald-100 text-emerald-700";
       case "rejected":
         return "bg-red-100 text-red-700";
@@ -264,6 +208,8 @@ const EmployerRecentApplications = ({ suppliedApplications, onStatusChanged }) =
           </div>
         </div>
 
+        <select aria-label="Filter job" className="mb-4 rounded border p-2" value={jobFilter} onChange={e=>{setJobFilter(e.target.value);setSelected([]);}}><option value="All">All jobs</option>{jobs.map(job=><option key={job.id} value={job.id}>{job.title}</option>)}</select>
+        {suppliedApplications === undefined && <BulkRecruitmentToolbar applications={applications} selected={selected} jobs={jobs} jobFilter={jobFilter} onChanged={changed} />}
         {loadError ? <div role="alert" className="p-4 text-red-700">{loadError} <Button variant="outline" onClick={() => fetchRecentApplications()}>Retry</Button></div> : loading ? (
           <div className="flex min-h-[220px] items-center justify-center">
             <div className="flex items-center gap-2 text-slate-500">
@@ -279,7 +225,7 @@ const EmployerRecentApplications = ({ suppliedApplications, onStatusChanged }) =
 
             <TableHeader>
               <TableRow>
-                <TableHead>Candidate</TableHead>
+                {suppliedApplications === undefined && <TableHead><Checkbox aria-label="Select all visible applicants" checked={filteredApplications.length>0 && filteredApplications.every(a=>selected.includes(a.id))} onCheckedChange={checked=>setSelected(checked?filteredApplications.map(a=>a.id):[])} /></TableHead>}<TableHead>Candidate</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>University</TableHead>
                 <TableHead>Status</TableHead>
@@ -292,6 +238,7 @@ const EmployerRecentApplications = ({ suppliedApplications, onStatusChanged }) =
               {filteredApplications.length > 0 ? (
                 filteredApplications.map((application) => (
                   <TableRow key={application.id}>
+                    {suppliedApplications === undefined && <TableCell><Checkbox aria-label={`Select ${application.candidate_name}`} checked={selected.includes(application.id)} onCheckedChange={checked=>setSelected(prev=>checked?[...prev,application.id]:prev.filter(id=>id!==application.id))} /></TableCell>}
                     <TableCell>
                       <button
                         type="button"
@@ -320,33 +267,17 @@ const EmployerRecentApplications = ({ suppliedApplications, onStatusChanged }) =
 
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <span
+                        <Badge
                           className={`rounded-full px-3 py-1 text-xs font-medium ${getStatusStyle(
                             application.status,
                           )}`}
                         >
                           {application.status_display}
-                        </span>
+                        </Badge>
 
-                        {updatingStatusId === application.id && (
-                          <Loader2 className="h-4 w-4 animate-spin text-slate-500" />
-                        )}
                       </div>
-
-                      <select
-                        value={application.status}
-                        disabled={updatingStatusId === application.id}
-                        onChange={(e) =>
-                          handleStatusUpdate(application, e.target.value)
-                        }
-                        className="mt-2 h-8 rounded-md border px-2 text-xs outline-none focus:border-black disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {statusOptions.map((status) => (
-                          <option key={status.value} value={status.value}>
-                            {status.label}
-                          </option>
-                        ))}
-                      </select>
+                      <RecruitmentActionMenu application={application} onChanged={changed} />
+                      <p className="mt-1 text-xs">Match: {application.match?.score == null ? 'Not configured' : `${application.match.score}%`}</p>
                     </TableCell>
 
                     <TableCell>{application.applied}</TableCell>
@@ -371,7 +302,7 @@ const EmployerRecentApplications = ({ suppliedApplications, onStatusChanged }) =
               ) : (
                 <TableRow>
                   <TableCell
-                    colSpan={6}
+                    colSpan={suppliedApplications === undefined ? 7 : 6}
                     className="py-8 text-center text-muted-foreground"
                   >
                     No applications found.
@@ -463,25 +394,7 @@ const EmployerRecentApplications = ({ suppliedApplications, onStatusChanged }) =
                     Update Application Status
                   </label>
 
-                  <select
-                    value={selectedApplication.status}
-                    disabled={updatingStatusId === selectedApplication.id}
-                    onChange={(e) =>
-                      handleStatusUpdate(selectedApplication, e.target.value)
-                    }
-                    className="h-10 w-full rounded-md border px-3 text-sm outline-none focus:border-black disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {statusOptions.map((status) => (
-                      <option key={status.value} value={status.value}>
-                        {status.label}
-                      </option>
-                    ))}
-                  </select>
-
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    Updating the status will notify the student through the
-                    platform and email if your backend email service is enabled.
-                  </p>
+                  <RecruitmentActionMenu application={selectedApplication} onChanged={changed} />
                 </div>
               </div>
 
@@ -508,6 +421,7 @@ const EmployerRecentApplications = ({ suppliedApplications, onStatusChanged }) =
                 </div>
               </div>
 
+              <section className="space-y-3 rounded-xl border p-4"><h3 className="font-semibold">Matching evidence</h3><p>{selectedApplication.match?.note}</p>{selectedApplication.match?.breakdown?.map(part=><div key={part.criterion}><strong>{part.criterion}: {part.score}% (weight {part.weight})</strong><p className="whitespace-pre-wrap text-sm">{part.evidence}</p>{part.expected && <p className="text-sm">Expected: {part.expected.join(', ')}. Matched: {part.matched.join(', ') || 'None'}.</p>}</div>)}{selectedApplication.screening_responses?.map((answer,index)=><div key={index}><strong>{answer.question}</strong><p>{answer.answer || 'Not answered'}</p><small>Desired: {answer.desired_answer || 'Not scored'}</small></div>)}{selectedApplication.interview_details && <p>Interview: {new Date(selectedApplication.interview_details.interview_date).toLocaleString()} — {selectedApplication.interview_details.meeting_link || selectedApplication.interview_details.location}</p>}{selectedApplication.offer_details && <p className="whitespace-pre-wrap">Offer: {selectedApplication.offer_details.terms}</p>}</section>
               <section className="space-y-4 rounded-xl border p-4">
                 <h3 className="font-semibold">Application details</h3>
                 {[["education", "Education"], ["skills", "Skills"], ["work_experience", "Work Experience"], ["projects", "Projects"], ["certifications", "Certifications"]].map(([field, label]) => (
